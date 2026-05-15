@@ -83,7 +83,7 @@ export default function MatchDetail() {
     match.stage === 'GROUP' && match.group ? `Grupo ${match.group}` : STAGE_LABEL[match.stage] ?? match.stage;
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
+    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={styles.scroll}>
       <Pressable onPress={() => router.back()}>
         <Text style={styles.back}>← Partidos</Text>
       </Pressable>

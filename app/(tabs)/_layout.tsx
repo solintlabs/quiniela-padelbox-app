@@ -5,6 +5,7 @@ import { colors, fontFamily } from '@/lib/theme';
 export default function TabsLayout() {
   return (
     <Tabs
+      sceneContainerStyle={{ backgroundColor: colors.bg }}
       screenOptions={{
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
@@ -19,6 +20,7 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: colors.bg },
         headerTitleStyle: { fontFamily: fontFamily.display, color: colors.ink },
         headerTintColor: colors.ink,
+        headerShadowVisible: false,
       }}
     >
       <Tabs.Screen

@@ -60,7 +60,7 @@ export default function InscripcionScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
+    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={styles.scroll}>
       <View>
         <Text style={styles.eyebrow}>CÓMO PARTICIPAR</Text>
         <Text style={styles.title}>Inscripción y pago</Text>

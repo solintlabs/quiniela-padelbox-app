@@ -27,14 +27,15 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
+    <SafeAreaProvider style={{ backgroundColor: colors.bg }}>
+      <StatusBar style="light" backgroundColor={colors.bg} />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.bg },
           headerTintColor: colors.ink,
-          headerTitleStyle: { fontFamily: 'ArchivoBlack_400Regular' },
+          headerTitleStyle: { fontFamily: 'ArchivoBlack_400Regular', color: colors.ink },
           contentStyle: { backgroundColor: colors.bg },
+          headerShadowVisible: false,
         }}
       >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />

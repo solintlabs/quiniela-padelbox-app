@@ -48,6 +48,7 @@ export default function PartidosScreen() {
 
   return (
     <FlatList
+      style={{ backgroundColor: colors.bg }}
       contentContainerStyle={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       ListHeaderComponent={
