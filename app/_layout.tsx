@@ -27,8 +27,9 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider style={{ backgroundColor: colors.bg }}>
-      <StatusBar style="light" backgroundColor={colors.bg} />
+    <SafeAreaProvider>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <StatusBar style="light" backgroundColor={colors.bg} />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.bg },
@@ -36,13 +37,16 @@ export default function RootLayout() {
           headerTitleStyle: { fontFamily: 'ArchivoBlack_400Regular', color: colors.ink },
           contentStyle: { backgroundColor: colors.bg },
           headerShadowVisible: false,
+          headerBackButtonDisplayMode: 'minimal',
+          headerTitleAlign: 'center',
         }}
       >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="partido/[id]" options={{ title: '' }} />
+        <Stack.Screen name="partido/[id]" options={{ title: 'Partido' }} />
         <Stack.Screen name="inscripcion" options={{ title: 'Inscripción' }} />
       </Stack>
+      </View>
     </SafeAreaProvider>
   );
 }

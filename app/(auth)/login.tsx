@@ -35,7 +35,7 @@ export default function LoginScreen() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.center}>
           <Logo width={170} />
           <Text style={styles.title}>Quiniela Mundial 2026</Text>
