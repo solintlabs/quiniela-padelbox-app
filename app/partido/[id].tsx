@@ -18,6 +18,15 @@ import { formatDateTime, STAGE_LABEL, timeLeft } from '@/lib/format';
 const MIN = 0;
 const MAX = 20;
 
+type AllPred = {
+  id: string;
+  homeScore: number;
+  awayScore: number;
+  points: number | null;
+  user: { id: string; name: string | null; email: string };
+  isMe: boolean;
+};
+
 export default function MatchDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -29,6 +38,7 @@ export default function MatchDetail() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [hasPaid, setHasPaid] = useState(true);
+  const [allPredictions, setAllPredictions] = useState<AllPred[] | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -42,6 +52,18 @@ export default function MatchDetail() {
         setAway(mine.awayScore);
       }
       setLoaded(true);
+
+      // Si el partido está cerrado, intentar cargar los pronósticos de todos
+      const lockedByTime = new Date(m.match.kickoff).getTime() - 15 * 60_000 <= Date.now();
+      const isLocked = !!m.match.lockedAt || m.match.status !== 'SCHEDULED' || lockedByTime;
+      if (isLocked) {
+        try {
+          const all = await api.matchPredictions(id!);
+          setAllPredictions(all.predictions);
+        } catch {
+          // 403 esperable si justo se cierra; ignorar
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar');
     }
@@ -112,6 +134,37 @@ export default function MatchDetail() {
           </Text>
         )}
       </View>
+
+      {allPredictions && allPredictions.length > 0 && (
+        <View>
+          <Text style={styles.sectionTitle}>Pronósticos de todos ({allPredictions.length})</Text>
+          <View style={styles.allList}>
+            {allPredictions.map((p, i) => {
+              const label =
+                p.points === 3 ? '+3 exacto' : p.points === 1 ? '+1 ganador' : p.points === 0 ? '0' : '—';
+              const labelColor =
+                p.points === 3 ? colors.success : p.points === 1 ? colors.warning : colors.muted;
+              return (
+                <View
+                  key={p.id}
+                  style={[
+                    styles.allRow,
+                    i > 0 && styles.allRowBorder,
+                    p.isMe && { backgroundColor: '#B6FF3C0F' },
+                  ]}
+                >
+                  <Text style={styles.allUser} numberOfLines={1}>
+                    {p.user.name ?? p.user.email}
+                    {p.isMe && <Text style={{ color: colors.muted }}>  · tú</Text>}
+                  </Text>
+                  <Text style={styles.allScore}>{p.homeScore}–{p.awayScore}</Text>
+                  <Text style={[styles.allPoints, { color: labelColor }]}>{label}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
       <View style={styles.formCard}>
         <View style={styles.scoreRow}>
@@ -230,4 +283,11 @@ const styles = StyleSheet.create({
   disabledMsg: { color: colors.muted, fontFamily: fontFamily.body, fontSize: fontSize.sm, textAlign: 'center' },
   success: { color: colors.success, fontFamily: fontFamily.body, fontSize: fontSize.sm },
   error: { color: colors.danger, fontFamily: fontFamily.body, fontSize: fontSize.sm, textAlign: 'center' },
+  sectionTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink, marginBottom: spacing.sm },
+  allList: { backgroundColor: colors.bgElev, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, overflow: 'hidden' },
+  allRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, gap: spacing.sm },
+  allRowBorder: { borderTopColor: colors.border, borderTopWidth: 1 },
+  allUser: { flex: 1, fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink },
+  allScore: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink, width: 60, textAlign: 'center' },
+  allPoints: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, width: 80, textAlign: 'right' },
 });

@@ -106,6 +106,23 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ matchId, homeScore, awayScore }),
     }),
+  predictBatch: (predictions: Array<{ matchId: string; homeScore: number; awayScore: number }>) =>
+    request<{ saved: number; skipped: Array<{ matchId: string; reason: string }> }>(
+      '/api/predictions/batch',
+      { method: 'POST', body: JSON.stringify({ predictions }) },
+    ),
+  matchPredictions: (matchId: string) =>
+    request<{
+      match: { id: string; homeTeam: string; awayTeam: string; homeScore: number | null; awayScore: number | null };
+      predictions: Array<{
+        id: string;
+        homeScore: number;
+        awayScore: number;
+        points: number | null;
+        user: { id: string; name: string | null; email: string };
+        isMe: boolean;
+      }>;
+    }>(`/api/matches/${matchId}/predictions`),
   myPredictions: () =>
     request<{ predictions: Array<{ id: string; matchId: string; homeScore: number; awayScore: number; points: number | null; match: ApiMatch }> }>(
       '/api/predictions/me',

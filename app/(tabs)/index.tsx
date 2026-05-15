@@ -9,6 +9,7 @@ export default function HomeScreen() {
   const [ranking, setRanking] = useState<ApiRanking | null>(null);
   const [nextMatch, setNextMatch] = useState<ApiMatch | null>(null);
   const [hasPaid, setHasPaid] = useState<boolean>(true);
+  const [groupStats, setGroupStats] = useState<{ total: number; filled: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +27,18 @@ export default function HomeScreen() {
         (x) => x.status === 'SCHEDULED' && !x.lockedAt,
       );
       setNextMatch(open ?? null);
+
+      const offsetMs = 15 * 60_000;
+      const now = Date.now();
+      const groupMatches = (ms.matches || []).filter(
+        (x) =>
+          x.stage === 'GROUP' &&
+          x.status === 'SCHEDULED' &&
+          !x.lockedAt &&
+          new Date(x.kickoff).getTime() - offsetMs > now,
+      );
+      const filled = groupMatches.filter((g) => (g.predictions?.length ?? 0) > 0).length;
+      setGroupStats({ total: groupMatches.length, filled });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar');
     }
@@ -95,6 +108,28 @@ export default function HomeScreen() {
             <Text style={[styles.mePillHint, { color: colors.success }]}>¡En el podio!</Text>
           )}
         </View>
+      )}
+
+      {groupStats && groupStats.total > 0 && groupStats.filled < groupStats.total && (
+        <Link href="/predecir-grupos" asChild>
+          <Pressable style={styles.fillCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <Text style={{ fontSize: 22 }}>🎯</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fillTitle}>Rellena tu quiniela</Text>
+                <Text style={styles.fillSubtitle}>
+                  <Text style={{ color: colors.accent, fontFamily: fontFamily.bold }}>{groupStats.filled}</Text>
+                  <Text style={{ color: colors.muted }}> / {groupStats.total} </Text>
+                  <Text style={{ color: colors.muted }}>partidos de fase de grupos</Text>
+                </Text>
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressBar, { width: `${(groupStats.filled / groupStats.total) * 100}%` }]} />
+                </View>
+              </View>
+              <Text style={styles.fillCta}>{groupStats.filled === 0 ? 'EMPEZAR' : 'CONTINUAR'} →</Text>
+            </View>
+          </Pressable>
+        </Link>
       )}
 
       {nextMatch && (
@@ -256,4 +291,16 @@ const styles = StyleSheet.create({
   },
   ctaText: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.accentFg, letterSpacing: 0.5 },
   footer: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, textAlign: 'center', marginTop: spacing.xl },
+  fillCard: {
+    backgroundColor: '#B6FF3C0D',
+    borderColor: colors.accent + '50',
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+  },
+  fillTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink },
+  fillSubtitle: { fontFamily: fontFamily.body, fontSize: fontSize.xs, marginTop: 2 },
+  fillCta: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.accent, letterSpacing: 0.5 },
+  progressTrack: { height: 4, backgroundColor: colors.bg, borderRadius: 2, marginTop: spacing.sm, overflow: 'hidden' },
+  progressBar: { height: '100%', backgroundColor: colors.accent },
 });

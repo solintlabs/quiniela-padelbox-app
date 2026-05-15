@@ -45,6 +45,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="partido/[id]" options={{ title: 'Partido' }} />
         <Stack.Screen name="inscripcion" options={{ title: 'Inscripción' }} />
+        <Stack.Screen name="predecir-grupos" options={{ title: 'Fase de grupos' }} />
+        <Stack.Screen name="reglas" options={{ title: 'Reglas' }} />
       </Stack>
       </View>
     </SafeAreaProvider>

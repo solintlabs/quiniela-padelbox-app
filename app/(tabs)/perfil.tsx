@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { Button } from '@/components/Button';
 import { api, type ApiUser, type ApiMatch } from '@/lib/api';
 import { clearToken } from '@/lib/auth';
@@ -128,6 +128,21 @@ export default function PerfilScreen() {
         )}
       </View>
 
+      <View style={{ gap: spacing.sm }}>
+        <Link href="/reglas" asChild>
+          <Pressable style={styles.linkRow}>
+            <Text style={styles.linkLabel}>📖  Reglas de la quiniela</Text>
+            <Text style={styles.linkArrow}>→</Text>
+          </Pressable>
+        </Link>
+        <Link href="/inscripcion" asChild>
+          <Pressable style={styles.linkRow}>
+            <Text style={styles.linkLabel}>💳  Inscripción y pago</Text>
+            <Text style={styles.linkArrow}>→</Text>
+          </Pressable>
+        </Link>
+      </View>
+
       <Button title="Cerrar sesión" variant="secondary" onPress={logout} />
 
       <Text style={styles.footer}>Desarrollado por Solintlabs · S.Baldini</Text>
@@ -168,4 +183,16 @@ const styles = StyleSheet.create({
   predScore: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink, width: 50, textAlign: 'center' },
   predBadge: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs },
   footer: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, textAlign: 'center', marginTop: spacing.lg },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    backgroundColor: colors.bgElev,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+  },
+  linkLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink },
+  linkArrow: { fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.muted },
 });
