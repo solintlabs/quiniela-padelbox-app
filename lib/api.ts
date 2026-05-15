@@ -130,6 +130,14 @@ export const api = {
       '/api/predictions/batch',
       { method: 'POST', body: JSON.stringify({ predictions }) },
     ),
+  userPredictions: (userId: string) =>
+    request<{
+      user: { id: string; name: string | null; email: string; hasPaid: boolean; createdAt: string };
+      isMe: boolean;
+      stats: { total: number; points: number; exact: number };
+      predictions: Array<{ id: string; homeScore: number; awayScore: number; points: number | null; match: ApiMatch }>;
+      hiddenCount: number;
+    }>(`/api/users/${userId}/predictions`),
   matchPredictions: (matchId: string) =>
     request<{
       match: { id: string; homeTeam: string; awayTeam: string; homeScore: number | null; awayScore: number | null };

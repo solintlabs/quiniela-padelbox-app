@@ -47,6 +47,7 @@ export default function RootLayout() {
         <Stack.Screen name="inscripcion" options={{ title: 'Inscripción' }} />
         <Stack.Screen name="predecir-grupos" options={{ title: 'Fase de grupos' }} />
         <Stack.Screen name="reglas" options={{ title: 'Reglas' }} />
+        <Stack.Screen name="usuario/[id]" options={{ title: 'Jugador' }} />
       </Stack>
       </View>
     </SafeAreaProvider>

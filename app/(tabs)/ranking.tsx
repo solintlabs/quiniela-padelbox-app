@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
 import { api, type ApiRanking } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
@@ -56,20 +57,23 @@ export default function RankingScreen() {
         const pos = index + 1;
         const isMe = item.userId === data?.meId;
         return (
-          <View style={[styles.row, isMe && styles.rowMe]}>
-            <Text style={[styles.cell, { width: 38 }, isMe && styles.cellMe]}>
-              {pos <= 3 ? `${MEDAL[pos - 1]} ${pos}` : isMe ? `▶ ${pos}` : pos}
-            </Text>
-            <Text style={[styles.cell, { flex: 1 }, isMe && styles.cellMe]} numberOfLines={1}>
-              {item.name ?? item.email}
-              {isMe && <Text style={{ color: colors.muted }}>  · tú</Text>}
-            </Text>
-            <Text style={[styles.cell, { width: 32, textAlign: 'right' }]}>{item.played}</Text>
-            <Text style={[styles.cell, { width: 44, textAlign: 'right' }]}>{item.exact}</Text>
-            <Text style={[styles.cell, styles.points, { width: 44, textAlign: 'right' }, isMe && { color: colors.accent }]}>
-              {item.points}
-            </Text>
-          </View>
+          <Link href={{ pathname: '/usuario/[id]', params: { id: item.userId } }} asChild>
+            <Pressable style={[styles.row, isMe && styles.rowMe]}>
+              <Text style={[styles.cell, { width: 38 }, isMe && styles.cellMe]}>
+                {pos <= 3 ? `${MEDAL[pos - 1]} ${pos}` : isMe ? `▶ ${pos}` : pos}
+              </Text>
+              <Text style={[styles.cell, { flex: 1 }, isMe && styles.cellMe]} numberOfLines={1}>
+                {item.name ?? item.email}
+                {isMe && <Text style={{ color: colors.muted }}>  · tú</Text>}
+              </Text>
+              <Text style={[styles.cell, { width: 32, textAlign: 'right' }]}>{item.played}</Text>
+              <Text style={[styles.cell, { width: 44, textAlign: 'right' }]}>{item.exact}</Text>
+              <Text style={[styles.cell, styles.points, { width: 44, textAlign: 'right' }, isMe && { color: colors.accent }]}>
+                {item.points}
+              </Text>
+              <Text style={[styles.cell, { width: 16, textAlign: 'right', color: colors.muted }]}>›</Text>
+            </Pressable>
+          </Link>
         );
       }}
       ListEmptyComponent={
