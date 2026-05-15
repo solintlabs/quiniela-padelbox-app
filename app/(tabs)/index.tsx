@@ -150,9 +150,19 @@ export default function HomeScreen() {
             </View>
           </View>
           <Text style={styles.kickoff}>{formatDateTime(nextMatch.kickoff)}</Text>
+          {nextMatch.predictions?.[0] && (
+            <Text style={styles.myPrediction}>
+              Tu pronóstico:{' '}
+              <Text style={styles.myPredictionScore}>
+                {nextMatch.predictions[0].homeScore}–{nextMatch.predictions[0].awayScore}
+              </Text>
+            </Text>
+          )}
           <Link href={`/partido/${nextMatch.id}`} asChild>
             <Pressable style={styles.cta}>
-              <Text style={styles.ctaText}>PREDECIR →</Text>
+              <Text style={styles.ctaText}>
+                {nextMatch.predictions?.[0] ? 'EDITAR PRONÓSTICO →' : 'PREDECIR →'}
+              </Text>
             </Pressable>
           </Link>
         </View>
@@ -332,4 +342,16 @@ const styles = StyleSheet.create({
   },
   shortcutIcon: { fontSize: 20 },
   shortcutLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink },
+  myPrediction: {
+    fontFamily: fontFamily.body,
+    fontSize: fontSize.sm,
+    color: colors.muted,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+  myPredictionScore: {
+    fontFamily: fontFamily.display,
+    fontSize: fontSize.lg,
+    color: colors.accent,
+  },
 });
