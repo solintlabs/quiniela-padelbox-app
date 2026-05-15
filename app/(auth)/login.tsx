@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { router } from 'expo-router';
+import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Link, router } from 'expo-router';
 import { Button } from '@/components/Button';
 import { Logo } from '@/components/Logo';
 import { requestLoginCode } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
+
+const WHATSAPP_NUMBER = '34635171649';
+const WHATSAPP_TEXT = 'Quiero inscribirme en la Quiniela PADELBOX';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -79,11 +82,51 @@ export default function LoginScreen() {
           </Text>
         </View>
 
+        {/* Accesos públicos a Reglas e Inscripción */}
+        <View style={styles.publicLinks}>
+          <Link href="/reglas" asChild>
+            <Pressable style={styles.publicCard}>
+              <Text style={styles.publicIcon}>📖</Text>
+              <Text style={styles.publicLabel}>Reglas</Text>
+              <Text style={styles.publicDesc}>Cómo funciona</Text>
+            </Pressable>
+          </Link>
+          <Link href="/inscripcion" asChild>
+            <Pressable style={styles.publicCard}>
+              <Text style={styles.publicIcon}>💳</Text>
+              <Text style={styles.publicLabel}>Inscripción</Text>
+              <Text style={styles.publicDesc}>Métodos de pago</Text>
+            </Pressable>
+          </Link>
+        </View>
+
+        {/* Botón WhatsApp directo */}
+        <Pressable
+          onPress={() =>
+            Linking.openURL(
+              `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_TEXT)}`,
+            )
+          }
+          style={styles.whatsapp}
+        >
+          <Text style={styles.whatsappIcon}>💬</Text>
+          <Text style={styles.whatsappText}>Contactar por WhatsApp</Text>
+        </Pressable>
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             ¿No estás inscrito? Tu cuenta se crea sola. El admin de PADELBOX valida tu pago para
             activarte.
           </Text>
+          <Pressable
+            onPress={() => Linking.openURL('https://solint.cloud')}
+            style={{ marginTop: spacing.lg }}
+          >
+            <Text style={styles.devCredit}>
+              Desarrollado por{' '}
+              <Text style={styles.devLink}>Solintlabs · S.Baldini</Text>
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -144,4 +187,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 320,
   },
+  publicLinks: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.xl,
+  },
+  publicCard: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+    padding: spacing.lg,
+    backgroundColor: colors.bgElev,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+  },
+  publicIcon: { fontSize: 22 },
+  publicLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink },
+  publicDesc: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted },
+  whatsapp: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: '#25D366',
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    marginTop: spacing.md,
+  },
+  whatsappIcon: { fontSize: 18 },
+  whatsappText: { fontFamily: fontFamily.bold, fontSize: fontSize.sm, color: '#fff' },
+  devCredit: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted, textAlign: 'center' },
+  devLink: { color: colors.accent, fontFamily: fontFamily.semibold, textDecorationLine: 'underline' },
 });

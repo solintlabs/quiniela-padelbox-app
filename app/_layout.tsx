@@ -4,7 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from '@/lib/theme';
 
@@ -23,7 +23,16 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+    // Mientras cargan las fuentes, mostramos fondo dark con logo para evitar
+    // el flash blanco que Expo Go inyecta antes de que aparezca la UI.
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <Image
+          source={require('../assets/logo-blanco.png')}
+          style={{ width: 180, height: 60, resizeMode: 'contain' }}
+        />
+      </View>
+    );
   }
 
   return (

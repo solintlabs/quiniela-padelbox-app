@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Button } from '@/components/Button';
 import { api, type ApiUser, type ApiMatch } from '@/lib/api';
@@ -145,7 +145,12 @@ export default function PerfilScreen() {
 
       <Button title="Cerrar sesión" variant="secondary" onPress={logout} />
 
-      <Text style={styles.footer}>Desarrollado por Solintlabs · S.Baldini</Text>
+      <Pressable onPress={() => Linking.openURL('https://solint.cloud')}>
+        <Text style={styles.footer}>
+          Desarrollado por{' '}
+          <Text style={{ color: colors.accent, textDecorationLine: 'underline' }}>Solintlabs · S.Baldini</Text>
+        </Text>
+      </Pressable>
     </ScrollView>
   );
 }

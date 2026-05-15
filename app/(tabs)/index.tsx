@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import { api, type ApiMatch, type ApiRanking } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
@@ -200,7 +200,12 @@ export default function HomeScreen() {
         </Link>
       </View>
 
-      <Text style={styles.footer}>Desarrollado por Solintlabs · S.Baldini</Text>
+      <Pressable onPress={() => Linking.openURL('https://solint.cloud')} style={{ marginTop: spacing.xl }}>
+        <Text style={styles.footer}>
+          Desarrollado por{' '}
+          <Text style={{ color: colors.accent, textDecorationLine: 'underline' }}>Solintlabs · S.Baldini</Text>
+        </Text>
+      </Pressable>
     </ScrollView>
   );
 }
