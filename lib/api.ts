@@ -1,8 +1,13 @@
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { getToken, setToken, setEmail, clearToken } from './auth';
 
 const API_URL =
   (Constants.expoConfig?.extra?.apiUrl as string) ?? 'https://quiniela-padelbox.vercel.app';
+
+export class UnauthenticatedError extends Error {
+  constructor() { super('Sesión caducada'); }
+}
 
 /** Cliente fetch con token JWT automático. Lanza si la respuesta no es OK. */
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -13,7 +18,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  } catch (e) {
+    console.warn('[api] fetch failed:', path, e);
+    throw new Error('Sin conexión con el servidor');
+  }
+
   if (!res.ok) {
     let message = `HTTP ${res.status}`;
     try {
@@ -22,7 +34,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     } catch {
       // ignore
     }
-    if (res.status === 401) await clearToken();
+    console.warn('[api]', path, res.status, message);
+    if (res.status === 401) {
+      await clearToken();
+      setTimeout(() => {
+        try { router.replace('/(auth)/login'); } catch {}
+      }, 0);
+      throw new UnauthenticatedError();
+    }
     throw new Error(message);
   }
   if (res.status === 204) return undefined as T;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { MatchCard } from '@/components/MatchCard';
 import { api, type ApiMatch } from '@/lib/api';
 import { colors, fontFamily, fontSize, spacing } from '@/lib/theme';
@@ -9,6 +9,7 @@ type Section = { title: string; data: ApiMatch[] };
 export default function PartidosScreen() {
   const [matches, setMatches] = useState<ApiMatch[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -18,6 +19,8 @@ export default function PartidosScreen() {
       setMatches(data.matches);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar');
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
@@ -55,7 +58,13 @@ export default function PartidosScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Partidos</Text>
           <Text style={styles.subtitle}>Mundial 2026 · {matches.length} partidos en total</Text>
-          {error && <Text style={styles.error}>{error}</Text>}
+          {error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorTitle}>No se pudieron cargar los partidos</Text>
+              <Text style={styles.errorBody}>{error}</Text>
+              <Text style={styles.errorHint}>Tira hacia abajo para reintentar.</Text>
+            </View>
+          )}
         </View>
       }
       data={sections}
@@ -69,7 +78,14 @@ export default function PartidosScreen() {
         </View>
       )}
       ListEmptyComponent={
-        !error ? <Text style={styles.empty}>Cargando partidos…</Text> : null
+        error ? null : !loaded ? (
+          <View style={{ alignItems: 'center', marginTop: spacing.xxl }}>
+            <ActivityIndicator color={colors.accent} />
+            <Text style={[styles.empty, { marginTop: spacing.md }]}>Cargando partidos…</Text>
+          </View>
+        ) : (
+          <Text style={styles.empty}>Aún no hay partidos cargados.</Text>
+        )
       }
     />
   );
@@ -89,5 +105,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   empty: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted, textAlign: 'center', marginTop: spacing.xxl },
-  error: { color: colors.danger, fontFamily: fontFamily.body, fontSize: fontSize.sm, marginTop: spacing.sm },
+  errorBox: {
+    marginTop: spacing.md,
+    backgroundColor: colors.danger + '20',
+    borderColor: colors.danger + '80',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: spacing.lg,
+  },
+  errorTitle: { color: colors.ink, fontFamily: fontFamily.semibold, fontSize: fontSize.sm },
+  errorBody: { color: colors.danger, fontFamily: fontFamily.body, fontSize: fontSize.sm, marginTop: 4 },
+  errorHint: { color: colors.muted, fontFamily: fontFamily.body, fontSize: fontSize.xs, marginTop: spacing.sm },
 });

@@ -158,6 +158,21 @@ export default function HomeScreen() {
         </View>
       )}
 
+      <View style={styles.shortcuts}>
+        <Link href="/reglas" asChild>
+          <Pressable style={styles.shortcut}>
+            <Text style={styles.shortcutIcon}>📖</Text>
+            <Text style={styles.shortcutLabel}>Reglas</Text>
+          </Pressable>
+        </Link>
+        <Link href="/inscripcion" asChild>
+          <Pressable style={styles.shortcut}>
+            <Text style={styles.shortcutIcon}>💳</Text>
+            <Text style={styles.shortcutLabel}>Inscripción</Text>
+          </Pressable>
+        </Link>
+      </View>
+
       <Text style={styles.footer}>Desarrollado por Solintlabs · S.Baldini</Text>
     </ScrollView>
   );
@@ -303,4 +318,18 @@ const styles = StyleSheet.create({
   fillCta: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.accent, letterSpacing: 0.5 },
   progressTrack: { height: 4, backgroundColor: colors.bg, borderRadius: 2, marginTop: spacing.sm, overflow: 'hidden' },
   progressBar: { height: '100%', backgroundColor: colors.accent },
+  shortcuts: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  shortcut: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.bgElev,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+  },
+  shortcutIcon: { fontSize: 20 },
+  shortcutLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink },
 });
