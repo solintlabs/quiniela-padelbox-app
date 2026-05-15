@@ -135,9 +135,26 @@ export default function MatchDetail() {
         )}
       </View>
 
-      {allPredictions && allPredictions.length > 0 && (
-        <View>
-          <Text style={styles.sectionTitle}>Pronósticos de todos ({allPredictions.length})</Text>
+      <View>
+        <Text style={styles.sectionTitle}>
+          Pronósticos de los demás{isLocked && allPredictions ? ` (${allPredictions.length})` : ''}
+        </Text>
+        {!isLocked ? (
+          <View style={[styles.allList, { padding: spacing.lg, gap: spacing.sm }]}>
+            <Text style={{ color: colors.ink, fontFamily: fontFamily.body, fontSize: fontSize.sm, textAlign: 'center' }}>
+              🔒 Se desbloquean <Text style={{ fontFamily: fontFamily.bold }}>15 min antes del kickoff</Text>.
+            </Text>
+            <Text style={{ color: colors.muted, fontFamily: fontFamily.body, fontSize: fontSize.xs, textAlign: 'center' }}>
+              Vuelve aquí cuando el partido se cierre.
+            </Text>
+          </View>
+        ) : !allPredictions || allPredictions.length === 0 ? (
+          <View style={[styles.allList, { padding: spacing.lg }]}>
+            <Text style={{ color: colors.muted, fontFamily: fontFamily.body, fontSize: fontSize.sm, textAlign: 'center' }}>
+              Nadie hizo pronóstico para este partido.
+            </Text>
+          </View>
+        ) : (
           <View style={styles.allList}>
             {allPredictions.map((p, i) => {
               const label =
@@ -163,8 +180,8 @@ export default function MatchDetail() {
               );
             })}
           </View>
-        </View>
-      )}
+        )}
+      </View>
 
       <View style={styles.formCard}>
         <View style={styles.scoreRow}>

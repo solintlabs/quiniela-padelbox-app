@@ -168,6 +168,23 @@ export default function HomeScreen() {
         </View>
       )}
 
+      <View style={styles.prizesCard}>
+        <Text style={styles.prizesEyebrow}>PREMIOS DEL CAMPEONATO</Text>
+        <Text style={styles.prizesTitle}>🏆 ¿Qué se llevan los ganadores?</Text>
+        <View style={{ marginTop: spacing.md }}>
+          {[
+            { place: '🥇 1er lugar', amount: '$1.500', highlight: true },
+            { place: '🥈 2º lugar', amount: '$500' },
+            { place: '🥉 3er lugar', amount: '$300' },
+          ].map((p, i) => (
+            <View key={p.place} style={[styles.prizeRow, i > 0 && { borderTopColor: colors.border, borderTopWidth: 1 }]}>
+              <Text style={styles.prizePlace}>{p.place}</Text>
+              <Text style={[styles.prizeAmount, p.highlight && { color: colors.accent }]}>{p.amount}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
       <View style={styles.shortcuts}>
         <Link href="/reglas" asChild>
           <Pressable style={styles.shortcut}>
@@ -354,4 +371,17 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     color: colors.accent,
   },
+  prizesCard: {
+    backgroundColor: colors.bgElev,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginTop: spacing.md,
+  },
+  prizesEyebrow: { fontFamily: fontFamily.semibold, fontSize: 10, color: colors.muted, letterSpacing: 1.6, textAlign: 'center' },
+  prizesTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink, textAlign: 'center', marginTop: spacing.xs },
+  prizeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.md },
+  prizePlace: { fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.ink },
+  prizeAmount: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink },
 });
