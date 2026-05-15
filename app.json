@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Quiniela PADELBOX",
+    "slug": "quiniela-padelbox-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo-blanco.png",
+    "scheme": "quinielapadelbox",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "cloud.solint.quinielapadelbox"
+    },
+    "android": {
+      "package": "cloud.solint.quinielapadelbox",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A0A",
+        "foregroundImage": "./assets/logo-blanco.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/logo-negro.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo-blanco.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0A0A0A"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "apiUrl": "https://quiniela-padelbox.vercel.app"
+    }
+  }
+}
