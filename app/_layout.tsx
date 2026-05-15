@@ -23,16 +23,10 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    // Mientras cargan las fuentes, mostramos fondo dark con logo para evitar
-    // el flash blanco que Expo Go inyecta antes de que aparezca la UI.
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Image
-          source={require('../assets/logo-blanco.png')}
-          style={{ width: 180, height: 60, resizeMode: 'contain' }}
-        />
-      </View>
-    );
+    // Mantener splash nativo visible mientras cargan las fuentes
+    // (en builds standalone es el icono + bg #0A0A0A definido en app.json;
+    // en Expo Go se muestra el splash de Expo Go, no se puede customizar).
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
   }
 
   return (
