@@ -35,9 +35,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "REEMPLAZAR_CON_TU_APPLE_ID@email.com",
-        "ascAppId": "REEMPLAZAR_CON_APP_ID_DE_APP_STORE_CONNECT",
-        "appleTeamId": "REEMPLAZAR_CON_TEAM_ID"
+        "appleId": "sergiobal6@hotmail.com",
+        "ascAppId": "6770234104",
+        "appleTeamId": "5AMF3HF2MK"
       },
       "android": {
         "serviceAccountKeyPath": "./play-store-credentials.json",

@@ -159,6 +159,11 @@ export const api = {
     request<{ predictions: Array<{ id: string; matchId: string; homeScore: number; awayScore: number; points: number | null; match: ApiMatch }> }>(
       '/api/predictions/me',
     ),
+  setChampion: (championPick: string | null) =>
+    request<{ me: ApiUser }>('/api/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ championPick }),
+    }),
 };
 
 export { API_URL };

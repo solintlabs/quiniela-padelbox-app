@@ -118,11 +118,18 @@ function ChampionCard({ champion, locked }: { champion: string | null; locked: b
           <Text style={styles.championNote}>
             {locked ? '🔒 Pick congelado al inicio del torneo' : 'Aún puedes cambiarlo antes del 11 jun'}
           </Text>
+          {!locked && (
+            <Link href="/elegir-campeon" asChild>
+              <Pressable>
+                <Text style={styles.championCta}>Cambiar →</Text>
+              </Pressable>
+            </Link>
+          )}
         </>
       ) : (
         <>
           <Text style={[styles.championName, { color: colors.muted }]}>Sin elegir</Text>
-          <Link href="/perfil" asChild>
+          <Link href="/elegir-campeon" asChild>
             <Pressable>
               <Text style={styles.championCta}>Elegir campeón →</Text>
             </Pressable>

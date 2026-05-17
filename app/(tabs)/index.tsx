@@ -195,27 +195,27 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <Link href="/cuadro" asChild>
-        <Pressable style={styles.cuadroCta}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.cuadroCtaTitle}>🎯 Mi Cuadro</Text>
-            <Text style={styles.cuadroCtaSub}>Tus grupos predichos · campeón · bracket</Text>
-          </View>
-          <Text style={styles.cuadroCtaArrow}>→</Text>
-        </Pressable>
-      </Link>
-
-      <View style={styles.shortcuts}>
+      {/* Hub de accesos: Cuadro, Reglas, Inscripcion */}
+      <View style={styles.hubGrid}>
+        <Link href="/cuadro" asChild>
+          <Pressable style={[styles.hubCard, styles.hubCardAccent]}>
+            <Text style={styles.hubIcon}>🎯</Text>
+            <Text style={styles.hubCardTitle}>Mi Cuadro</Text>
+            <Text style={styles.hubCardSub}>Grupos + campeón</Text>
+          </Pressable>
+        </Link>
         <Link href="/reglas" asChild>
-          <Pressable style={styles.shortcut}>
-            <Text style={styles.shortcutIcon}>📖</Text>
-            <Text style={styles.shortcutLabel}>Reglas</Text>
+          <Pressable style={styles.hubCard}>
+            <Text style={styles.hubIcon}>📖</Text>
+            <Text style={styles.hubCardTitle}>Reglas</Text>
+            <Text style={styles.hubCardSub}>3-1-0 · cierre</Text>
           </Pressable>
         </Link>
         <Link href="/inscripcion" asChild>
-          <Pressable style={styles.shortcut}>
-            <Text style={styles.shortcutIcon}>💳</Text>
-            <Text style={styles.shortcutLabel}>Inscripción</Text>
+          <Pressable style={styles.hubCard}>
+            <Text style={styles.hubIcon}>💳</Text>
+            <Text style={styles.hubCardTitle}>Inscripción</Text>
+            <Text style={styles.hubCardSub}>Pago + activar</Text>
           </Pressable>
         </Link>
       </View>
@@ -367,20 +367,21 @@ const styles = StyleSheet.create({
   fillCta: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.accent, letterSpacing: 0.5 },
   progressTrack: { height: 4, backgroundColor: colors.bg, borderRadius: 2, marginTop: spacing.sm, overflow: 'hidden' },
   progressBar: { height: '100%', backgroundColor: colors.accent },
-  cuadroCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.accent + '15',
-    borderColor: colors.accent + '70',
+  hubGrid: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  hubCard: {
+    flex: 1,
+    backgroundColor: colors.bgElev,
+    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.md,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: 4,
   },
-  cuadroCtaTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink },
-  cuadroCtaSub: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
-  cuadroCtaArrow: { fontFamily: fontFamily.display, fontSize: 22, color: colors.accent },
+  hubCardAccent: { backgroundColor: colors.accent + '15', borderColor: colors.accent + '70' },
+  hubIcon: { fontSize: 24 },
+  hubCardTitle: { fontFamily: fontFamily.display, fontSize: fontSize.sm, color: colors.ink, textAlign: 'center' },
+  hubCardSub: { fontFamily: fontFamily.body, fontSize: 10, color: colors.muted, textAlign: 'center' },
   shortcuts: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   shortcut: {
     flex: 1,
