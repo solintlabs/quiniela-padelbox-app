@@ -79,7 +79,8 @@ export default function LoginScreen() {
               </View>
             </View>
             <Text style={styles.prizesHint}>
-              + gift cards <Text style={{ color: DELISH_ORANGE, fontFamily: fontFamily.semibold }}>DELISH</Text> cada semana
+              + gift cards en <Text style={{ color: DELISH_ORANGE, fontFamily: fontFamily.semibold }}>DELISH</Text> y
+              afiliados (Sole Mio, Tacoberto, Vinny&apos;s…)
             </Text>
           </View>
 

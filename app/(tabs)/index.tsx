@@ -169,11 +169,15 @@ export default function HomeScreen() {
         <View style={{ flex: 1 }}>
           <Text style={styles.delishBandEyebrow}>PREMIOS SEMANALES · PRESENTADOS POR</Text>
           <Text style={styles.delishBandTitle}>
-            Gift cards <Text style={{ color: '#f14826' }}>DELISH!</Text> cada semana
+            Gift cards en <Text style={{ color: '#f14826' }}>DELISH!</Text> y afiliados
           </Text>
           <Text style={styles.delishBandBody}>
-            Los mejores pronosticadores de la semana se llevan combos y gift cards canjeables en cualquier
-            restaurante DELISH.
+            Top pronosticadores se llevan gift cards canjeables en{' '}
+            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>DELISH</Text>,{' '}
+            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>Sole Mio</Text>,{' '}
+            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>Tacoberto</Text>,{' '}
+            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>Vinny&apos;s</Text> y demás
+            restaurantes afiliados del grupo.
           </Text>
         </View>
       </View>
