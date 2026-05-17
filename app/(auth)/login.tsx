@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ImageBackground, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, ImageBackground, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Button } from '@/components/Button';
 import { Logo } from '@/components/Logo';
@@ -7,6 +7,7 @@ import { requestLoginCode } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
 const STADIUM_BG = 'https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=1200&q=70';
+const DELISH_ORANGE = '#f14826';
 
 const WHATSAPP_NUMBER = '34635171649';
 const WHATSAPP_TEXT = 'Quiero inscribirme en la Quiniela PADELBOX';
@@ -49,7 +50,18 @@ export default function LoginScreen() {
         <View style={styles.overlay} pointerEvents="none" />
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.center}>
-            <Logo width={170} />
+            {/* Co-branding PADELBOX × DELISH */}
+            <View style={styles.cobrandRow}>
+              <Logo width={140} />
+              <Text style={styles.cobrandX}>×</Text>
+              <Image
+                source={require('@/assets/delish.png')}
+                style={styles.delishLogo}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.cobrandLabel}>PRESENTAN LA QUINIELA</Text>
+
             <Text style={styles.eyebrow}>MUNDIAL 2026</Text>
 
             <View style={styles.prizesRow}>
@@ -66,7 +78,9 @@ export default function LoginScreen() {
                 <Text style={[styles.prizeAmount, { color: '#FB923C' }]}>$300</Text>
               </View>
             </View>
-            <Text style={styles.prizesHint}>+ premios semanales de patrocinadores</Text>
+            <Text style={styles.prizesHint}>
+              + gift cards <Text style={{ color: DELISH_ORANGE, fontFamily: fontFamily.semibold }}>DELISH</Text> cada semana
+            </Text>
           </View>
 
           <View style={styles.form}>
@@ -88,7 +102,7 @@ export default function LoginScreen() {
             <TextInput
               value={phone}
               onChangeText={setPhone}
-              placeholder="+34 600 000 000"
+              placeholder="+58 412 555 0000"
               placeholderTextColor={colors.muted}
               keyboardType="phone-pad"
               autoComplete="tel"
@@ -179,6 +193,10 @@ const styles = StyleSheet.create({
   },
   scroll: { flexGrow: 1, padding: spacing.xl, paddingTop: spacing.xxl * 2 },
   center: { alignItems: 'center', marginBottom: spacing.xl },
+  cobrandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xs },
+  cobrandX: { fontFamily: fontFamily.display, fontSize: 28, color: colors.muted, lineHeight: 30 },
+  delishLogo: { width: 110, height: 56 },
+  cobrandLabel: { fontFamily: fontFamily.semibold, fontSize: 9, color: colors.muted, letterSpacing: 3, marginTop: 4 },
   eyebrow: {
     fontFamily: fontFamily.bold,
     fontSize: 10,

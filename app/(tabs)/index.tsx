@@ -163,6 +163,21 @@ export default function HomeScreen() {
         </View>
       )}
 
+      {/* Banda DELISH protagonista */}
+      <View style={styles.delishBand}>
+        <Image source={require('@/assets/delish.png')} style={styles.delishBandLogo} resizeMode="contain" />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.delishBandEyebrow}>PREMIOS SEMANALES · PRESENTADOS POR</Text>
+          <Text style={styles.delishBandTitle}>
+            Gift cards <Text style={{ color: '#f14826' }}>DELISH!</Text> cada semana
+          </Text>
+          <Text style={styles.delishBandBody}>
+            Los mejores pronosticadores de la semana se llevan combos y gift cards canjeables en cualquier
+            restaurante DELISH.
+          </Text>
+        </View>
+      </View>
+
       <View style={styles.prizesCard}>
         <Text style={styles.prizesEyebrow}>PREMIOS DEL CAMPEONATO</Text>
         <Text style={styles.prizesTitle}>🏆 ¿Qué se llevan los ganadores?</Text>
@@ -392,6 +407,21 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     color: colors.accent,
   },
+  delishBand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: 'rgba(241,72,38,0.10)',
+    borderColor: 'rgba(241,72,38,0.55)',
+    borderWidth: 2,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  delishBandLogo: { width: 88, height: 88, flexShrink: 0 },
+  delishBandEyebrow: { fontFamily: fontFamily.bold, fontSize: 9, color: '#f14826', letterSpacing: 1.6 },
+  delishBandTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink, marginTop: 4, lineHeight: 20 },
+  delishBandBody: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, marginTop: 4 },
   prizesCard: {
     backgroundColor: colors.bgElev,
     borderColor: colors.border,
