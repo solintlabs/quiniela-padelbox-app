@@ -10,6 +10,8 @@ const MUNDIAL_GROUPS = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'
 type Tab = 'mundial' | 'liga';
 type Section = { title: string; data: ApiMatch[] };
 
+type PendingState = { home: number; away: number };
+
 export default function PartidosScreen() {
   const [matches, setMatches] = useState<ApiMatch[]>([]);
   const [hasPaid, setHasPaid] = useState<boolean>(false);
@@ -18,12 +20,34 @@ export default function PartidosScreen() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Estado controlado de predicciones (no autosave)
+  const [values, setValues] = useState<Record<string, PendingState>>({});
+  const [initial, setInitial] = useState<Record<string, PendingState | null>>({});
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [bulkSaving, setBulkSaving] = useState(false);
+
   const load = useCallback(async () => {
     try {
       setError(null);
       const [data, m] = await Promise.all([api.matches(), api.me()]);
       setMatches(data.matches);
       setHasPaid(m.me.hasPaid);
+      // Inicializa values y initial baseline desde las predictions ya guardadas
+      const v: Record<string, PendingState> = {};
+      const ini: Record<string, PendingState | null> = {};
+      for (const mt of data.matches) {
+        const p = mt.predictions?.[0];
+        if (p) {
+          v[mt.id] = { home: p.homeScore, away: p.awayScore };
+          ini[mt.id] = { home: p.homeScore, away: p.awayScore };
+        } else {
+          v[mt.id] = { home: 0, away: 0 };
+          ini[mt.id] = null;
+        }
+      }
+      setValues(v);
+      setInitial(ini);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar');
     } finally {
@@ -40,6 +64,79 @@ export default function PartidosScreen() {
     await load();
     setRefreshing(false);
   }
+
+  function isDirty(id: string): boolean {
+    const v = values[id];
+    const base = initial[id];
+    if (!v) return false;
+    if (!base) return v.home !== 0 || v.away !== 0;
+    return v.home !== base.home || v.away !== base.away;
+  }
+
+  function onPredictionChange(id: string, home: number, away: number) {
+    setValues((prev) => ({ ...prev, [id]: { home, away } }));
+    setErrors((prev) => {
+      if (!(id in prev)) return prev;
+      const n = { ...prev };
+      delete n[id];
+      return n;
+    });
+  }
+
+  async function saveOne(id: string) {
+    const v = values[id];
+    if (!v) return;
+    setSavingIds((s) => new Set(s).add(id));
+    setErrors((e) => {
+      const n = { ...e };
+      delete n[id];
+      return n;
+    });
+    try {
+      await api.predict(id, v.home, v.away);
+      setInitial((ini) => ({ ...ini, [id]: { home: v.home, away: v.away } }));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error';
+      setErrors((errs) => ({ ...errs, [id]: msg }));
+    } finally {
+      setSavingIds((s) => {
+        const n = new Set(s);
+        n.delete(id);
+        return n;
+      });
+    }
+  }
+
+  async function saveAll() {
+    const dirtyIds = Object.keys(values).filter(isDirty);
+    if (dirtyIds.length === 0) return;
+    const payload = dirtyIds.map((id) => ({
+      matchId: id,
+      homeScore: values[id].home,
+      awayScore: values[id].away,
+    }));
+    setBulkSaving(true);
+    try {
+      await api.predictBatch(payload);
+      setInitial((ini) => {
+        const n = { ...ini };
+        for (const id of dirtyIds) n[id] = { home: values[id].home, away: values[id].away };
+        return n;
+      });
+      setErrors({});
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error';
+      setErrors((errs) => {
+        const n = { ...errs };
+        for (const id of dirtyIds) n[id] = msg;
+        return n;
+      });
+    } finally {
+      setBulkSaving(false);
+    }
+  }
+
+  const dirtyCount = Object.keys(values).filter(isDirty).length;
 
   const counts = useMemo(() => {
     let mundial = 0, liga = 0;
@@ -96,6 +193,19 @@ export default function PartidosScreen() {
               onPress={() => setTab('liga')}
             />
           </View>
+
+          {hasPaid && dirtyCount > 0 && (
+            <View style={styles.dirtyBar}>
+              <Text style={styles.dirtyBarText}>
+                ● {dirtyCount} sin guardar
+              </Text>
+              <Pressable onPress={saveAll} disabled={bulkSaving} style={[styles.saveAllBtn, bulkSaving && { opacity: 0.5 }]}>
+                <Text style={styles.saveAllBtnText}>
+                  {bulkSaving ? 'Guardando…' : `Guardar todo (${dirtyCount})`}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       }
       data={sections}
@@ -105,7 +215,18 @@ export default function PartidosScreen() {
           <Text style={styles.sectionTitle}>{item.title}</Text>
           {item.data.map((m) =>
             item.kind === 'inline' ? (
-              <InlinePredictionRow key={m.id} match={m} canEdit={hasPaid} onSaved={load} />
+              <InlinePredictionRow
+                key={m.id}
+                match={m}
+                canEdit={hasPaid}
+                homeValue={values[m.id]?.home ?? 0}
+                awayValue={values[m.id]?.away ?? 0}
+                onChange={onPredictionChange}
+                dirty={isDirty(m.id)}
+                saving={savingIds.has(m.id) || bulkSaving}
+                error={errors[m.id] ?? null}
+                onSave={saveOne}
+              />
             ) : (
               <MatchCard key={m.id} match={m} />
             ),
@@ -176,6 +297,26 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: { color: colors.ink },
   tabCount: { color: colors.muted, fontFamily: fontFamily.body },
+  dirtyBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.warning + '18',
+    borderColor: colors.warning + '60',
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  dirtyBarText: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.warning },
+  saveAllBtn: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+  },
+  saveAllBtnText: { fontFamily: fontFamily.display, fontSize: fontSize.xs, color: colors.accentFg, letterSpacing: 0.3 },
   sectionTitle: {
     fontFamily: fontFamily.semibold,
     fontSize: 10,

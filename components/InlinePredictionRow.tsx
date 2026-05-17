@@ -1,14 +1,20 @@
-import { useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
-import { api, type ApiMatch } from '@/lib/api';
+import { type ApiMatch } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { formatDateTime, STAGE_LABEL, timeLeft } from '@/lib/format';
 
 interface Props {
   match: ApiMatch;
   canEdit: boolean;
-  onSaved?: () => void;
+  /** Controlado: el wrapper PartidosClient maneja valores. */
+  homeValue: number;
+  awayValue: number;
+  onChange: (matchId: string, home: number, away: number) => void;
+  dirty: boolean;
+  saving: boolean;
+  error: string | null;
+  onSave: (matchId: string) => void;
 }
 
 function clamp(n: number) {
@@ -16,13 +22,19 @@ function clamp(n: number) {
   return Math.max(0, Math.min(20, Math.floor(n)));
 }
 
-export function InlinePredictionRow({ match, canEdit, onSaved }: Props) {
+export function InlinePredictionRow({
+  match,
+  canEdit,
+  homeValue,
+  awayValue,
+  onChange,
+  dirty,
+  saving,
+  error,
+  onSave,
+}: Props) {
   const initial = match.predictions?.[0];
-  const [home, setHome] = useState<number>(initial?.homeScore ?? 0);
-  const [away, setAway] = useState<number>(initial?.awayScore ?? 0);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(!!initial);
-  const [error, setError] = useState<string | null>(null);
+  const hasInitial = !!initial;
 
   const isFinished = match.status === 'FINISHED';
   const isLockedByTime = new Date(match.kickoff).getTime() - 15 * 60_000 <= Date.now();
@@ -35,34 +47,13 @@ export function InlinePredictionRow({ match, canEdit, onSaved }: Props) {
         ? `Grupo ${match.group}`
         : STAGE_LABEL[match.stage] ?? match.stage;
 
-  async function save(h: number, a: number) {
-    if (!canEdit || isLocked) return;
-    setSaving(true);
-    setSaved(false);
-    setError(null);
-    try {
-      await api.predict(match.id, h, a);
-      setSaved(true);
-      onSaved?.();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function update(h: number, a: number) {
-    setHome(h);
-    setAway(a);
-    void save(h, a);
-  }
-
   return (
     <View
       style={[
         styles.card,
-        !isLocked && !!initial && styles.cardWithPred,
-        !isLocked && !initial && styles.cardOpen,
+        !isLocked && dirty && styles.cardDirty,
+        !isLocked && !dirty && hasInitial && styles.cardWithPred,
+        !isLocked && !dirty && !hasInitial && styles.cardOpen,
       ]}
     >
       <Link href={`/partido/${match.id}`} asChild>
@@ -96,9 +87,9 @@ export function InlinePredictionRow({ match, canEdit, onSaved }: Props) {
           <Text style={styles.scoreMuted}>– vs –</Text>
         ) : canEdit ? (
           <View style={styles.steppers}>
-            <Stepper value={home} onChange={(v) => update(clamp(v), away)} disabled={saving} />
+            <Stepper value={homeValue} onChange={(v) => onChange(match.id, clamp(v), awayValue)} disabled={saving} />
             <Text style={styles.scoreDash}>–</Text>
-            <Stepper value={away} onChange={(v) => update(home, clamp(v))} disabled={saving} />
+            <Stepper value={awayValue} onChange={(v) => onChange(match.id, homeValue, clamp(v))} disabled={saving} />
           </View>
         ) : (
           <Link href="/inscripcion" asChild>
@@ -127,19 +118,31 @@ export function InlinePredictionRow({ match, canEdit, onSaved }: Props) {
         ) : !isLocked && canEdit ? (
           <View style={styles.footerLeftRow}>
             {saving && <ActivityIndicator size="small" color={colors.muted} />}
-            {!saving && saved && <Text style={styles.footerSaved}>✓ Guardado</Text>}
+            {!saving && dirty && <Text style={styles.footerDirty}>● Sin guardar</Text>}
+            {!saving && !dirty && hasInitial && <Text style={styles.footerSaved}>✓ Guardado</Text>}
             {!!error && <Text style={styles.footerError}>{error}</Text>}
           </View>
         ) : (
           <View />
         )}
-        <Link href={`/partido/${match.id}`} asChild>
-          <Pressable>
-            <Text style={styles.footerLink}>
-              {isLocked ? 'Ver pronósticos de todos →' : 'Ver detalle →'}
-            </Text>
-          </Pressable>
-        </Link>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+          {!isLocked && canEdit && dirty && (
+            <Pressable
+              onPress={() => onSave(match.id)}
+              disabled={saving}
+              style={[styles.saveBtn, saving && { opacity: 0.5 }]}
+            >
+              <Text style={styles.saveBtnText}>{saving ? '…' : 'Guardar'}</Text>
+            </Pressable>
+          )}
+          <Link href={`/partido/${match.id}`} asChild>
+            <Pressable>
+              <Text style={styles.footerLink}>
+                {isLocked ? 'Ver →' : 'Detalle →'}
+              </Text>
+            </Pressable>
+          </Link>
+        </View>
       </View>
     </View>
   );
@@ -203,6 +206,10 @@ const styles = StyleSheet.create({
     borderColor: colors.accent + '70',
     backgroundColor: '#B6FF3C12',
   },
+  cardDirty: {
+    borderColor: colors.warning + 'AA',
+    backgroundColor: colors.warning + '12',
+  },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   meta: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, flex: 1 },
   metaMuted: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted },
@@ -258,6 +265,9 @@ const styles = StyleSheet.create({
   footerLeftRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   footerScore: { color: colors.ink, fontFamily: fontFamily.semibold },
   footerSaved: { fontFamily: fontFamily.semibold, fontSize: 11, color: colors.success },
+  footerDirty: { fontFamily: fontFamily.semibold, fontSize: 11, color: colors.warning },
+  saveBtn: { backgroundColor: colors.accent, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.sm },
+  saveBtnText: { fontFamily: fontFamily.display, fontSize: 11, color: colors.accentFg, letterSpacing: 0.3 },
   footerError: { fontFamily: fontFamily.body, fontSize: 11, color: colors.danger },
   footerLink: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted },
 });
