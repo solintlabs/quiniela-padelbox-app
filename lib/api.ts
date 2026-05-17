@@ -129,6 +129,7 @@ export interface ApiRules {
   lockOffsetMin: number;
   tournamentStartAt: string | null;
   syncPaused: boolean;
+  weeklyPrizesText: string | null;
 }
 
 export interface ApiSponsor {

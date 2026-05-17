@@ -114,7 +114,7 @@ export default function HomeScreen() {
       )}
 
       {groupStats && groupStats.total > 0 && groupStats.filled < groupStats.total && (
-        <Link href="/predecir-grupos" asChild>
+        <Link href={{ pathname: '/(tabs)/partidos' }} asChild>
           <Pressable style={styles.fillCard}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
               <Text style={{ fontSize: 22 }}>🎯</Text>

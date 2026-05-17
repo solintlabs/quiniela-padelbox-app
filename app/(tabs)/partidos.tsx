@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
 import { MatchCard } from '@/components/MatchCard';
 import { InlinePredictionRow } from '@/components/InlinePredictionRow';
-import { api, type ApiMatch } from '@/lib/api';
+import { api, type ApiMatch, type ApiRules, type ApiUser } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
+import { STAGE_LABEL } from '@/lib/format';
 
-const MUNDIAL_GROUPS = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']);
+const MUNDIAL_GROUPS_ARR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+const MUNDIAL_GROUPS = new Set(MUNDIAL_GROUPS_ARR);
+const KNOCKOUT_STAGES = ['R32', 'R16', 'QF', 'SF', 'THIRD', 'FINAL'] as const;
 
 type Tab = 'mundial' | 'liga';
 type Section = { title: string; data: ApiMatch[] };
@@ -14,6 +18,8 @@ type PendingState = { home: number; away: number };
 
 export default function PartidosScreen() {
   const [matches, setMatches] = useState<ApiMatch[]>([]);
+  const [me, setMe] = useState<ApiUser | null>(null);
+  const [rules, setRules] = useState<ApiRules | null>(null);
   const [hasPaid, setHasPaid] = useState<boolean>(false);
   const [tab, setTab] = useState<Tab>('mundial');
   const [refreshing, setRefreshing] = useState(false);
@@ -30,9 +36,11 @@ export default function PartidosScreen() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [data, m] = await Promise.all([api.matches(), api.me()]);
+      const [data, m, r] = await Promise.all([api.matches(), api.me(), api.rules()]);
       setMatches(data.matches);
       setHasPaid(m.me.hasPaid);
+      setMe(m.me);
+      setRules(r.rules);
       // Inicializa values y initial baseline desde las predictions ya guardadas
       const v: Record<string, PendingState> = {};
       const ini: Record<string, PendingState | null> = {};
@@ -153,11 +161,32 @@ export default function PartidosScreen() {
   );
 
   type SectionWithKind = Section & { kind: 'inline' | 'card' };
-  const sections: SectionWithKind[] = useMemo(() => [
-    { kind: 'inline' as const, title: 'Próximos · puedes predecir', data: filtered.filter((m) => m.status === 'SCHEDULED' && !m.lockedAt) },
-    { kind: 'card' as const, title: 'En juego o cerrados', data: filtered.filter((m) => m.status !== 'FINISHED' && (m.status !== 'SCHEDULED' || m.lockedAt)) },
-    { kind: 'card' as const, title: 'Finalizados', data: filtered.filter((m) => m.status === 'FINISHED') },
-  ].filter((s) => s.data.length > 0), [filtered]);
+  const sections: SectionWithKind[] = useMemo(() => {
+    if (tab === 'mundial') {
+      // Por grupo A-L + rondas eliminatorias. Todos como 'inline' (editable
+      // si esta abierto, read-only si esta cerrado / finalizado).
+      const out: SectionWithKind[] = [];
+      for (const g of MUNDIAL_GROUPS_ARR) {
+        const groupMatches = filtered.filter((m) => m.group === g);
+        if (groupMatches.length > 0) {
+          out.push({ kind: 'inline', title: `Grupo ${g}`, data: groupMatches });
+        }
+      }
+      for (const stage of KNOCKOUT_STAGES) {
+        const stageMatches = filtered.filter((m) => m.stage === stage);
+        if (stageMatches.length > 0) {
+          out.push({ kind: 'inline', title: STAGE_LABEL[stage] ?? stage, data: stageMatches });
+        }
+      }
+      return out;
+    }
+    // La Liga: estilo clasico (proximos / cerrados / finalizados)
+    return [
+      { kind: 'inline' as const, title: 'Próximos · puedes predecir', data: filtered.filter((m) => m.status === 'SCHEDULED' && !m.lockedAt) },
+      { kind: 'card' as const, title: 'En juego o cerrados', data: filtered.filter((m) => m.status !== 'FINISHED' && (m.status !== 'SCHEDULED' || m.lockedAt)) },
+      { kind: 'card' as const, title: 'Finalizados', data: filtered.filter((m) => m.status === 'FINISHED') },
+    ].filter((s) => s.data.length > 0);
+  }, [filtered, tab]);
 
   return (
     <FlatList
@@ -204,6 +233,44 @@ export default function PartidosScreen() {
                   {bulkSaving ? 'Guardando…' : `Guardar todo (${dirtyCount})`}
                 </Text>
               </Pressable>
+            </View>
+          )}
+
+          {/* Mi Campeón — solo tab Mundial */}
+          {tab === 'mundial' && (
+            <View style={styles.championCard}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.championEyebrow}>MI CAMPEÓN</Text>
+                {me?.championPick ? (
+                  <>
+                    <Text style={styles.championValue}>{me.championPick.toUpperCase()}</Text>
+                    <Text style={styles.championNote}>
+                      {me.championLockedAt ? '🔒 Pick congelado' : 'Cambiable hasta 11 jun'}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.championNote}>
+                    Sin elegir · +25 pts si aciertas
+                  </Text>
+                )}
+              </View>
+              {!me?.championLockedAt && (
+                <Link href="/elegir-campeon" asChild>
+                  <Pressable style={styles.championBtn}>
+                    <Text style={styles.championBtnText}>
+                      {me?.championPick ? 'Cambiar' : 'Elegir →'}
+                    </Text>
+                  </Pressable>
+                </Link>
+              )}
+            </View>
+          )}
+
+          {/* Premios de esta semana — solo tab Mundial */}
+          {tab === 'mundial' && rules?.weeklyPrizesText && (
+            <View style={styles.weeklyPrizes}>
+              <Text style={styles.weeklyEyebrow}>🍔 PREMIOS DE ESTA SEMANA</Text>
+              <Text style={styles.weeklyBody}>{rules.weeklyPrizesText}</Text>
             </View>
           )}
         </View>
@@ -317,6 +384,37 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   saveAllBtnText: { fontFamily: fontFamily.display, fontSize: fontSize.xs, color: colors.accentFg, letterSpacing: 0.3 },
+  championCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderWidth: 2,
+    borderColor: colors.accent + 'AA',
+    backgroundColor: colors.accent + '12',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  championEyebrow: { fontFamily: fontFamily.bold, fontSize: 10, color: colors.accent, letterSpacing: 2 },
+  championValue: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink, marginTop: 2 },
+  championNote: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted, marginTop: 2 },
+  championBtn: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+  },
+  championBtnText: { fontFamily: fontFamily.display, fontSize: fontSize.xs, color: colors.accentFg, letterSpacing: 0.3 },
+  weeklyPrizes: {
+    borderWidth: 2,
+    borderColor: '#f14826' + '70',
+    backgroundColor: '#f14826' + '12',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  weeklyEyebrow: { fontFamily: fontFamily.bold, fontSize: 10, color: '#f14826', letterSpacing: 2 },
+  weeklyBody: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink, marginTop: spacing.sm, lineHeight: 20 },
   sectionTitle: {
     fontFamily: fontFamily.semibold,
     fontSize: 10,
