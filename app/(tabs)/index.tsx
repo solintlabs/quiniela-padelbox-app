@@ -180,6 +180,16 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      <Link href="/cuadro" asChild>
+        <Pressable style={styles.cuadroCta}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cuadroCtaTitle}>🎯 Mi Cuadro</Text>
+            <Text style={styles.cuadroCtaSub}>Tus grupos predichos · campeón · bracket</Text>
+          </View>
+          <Text style={styles.cuadroCtaArrow}>→</Text>
+        </Pressable>
+      </Link>
+
       <View style={styles.shortcuts}>
         <Link href="/reglas" asChild>
           <Pressable style={styles.shortcut}>
@@ -342,6 +352,20 @@ const styles = StyleSheet.create({
   fillCta: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.accent, letterSpacing: 0.5 },
   progressTrack: { height: 4, backgroundColor: colors.bg, borderRadius: 2, marginTop: spacing.sm, overflow: 'hidden' },
   progressBar: { height: '100%', backgroundColor: colors.accent },
+  cuadroCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.accent + '15',
+    borderColor: colors.accent + '70',
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginTop: spacing.md,
+  },
+  cuadroCtaTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink },
+  cuadroCtaSub: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  cuadroCtaArrow: { fontFamily: fontFamily.display, fontSize: 22, color: colors.accent },
   shortcuts: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   shortcut: {
     flex: 1,
