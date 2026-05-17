@@ -31,9 +31,12 @@ export default function HomeScreen() {
 
       const offsetMs = 15 * 60_000;
       const now = Date.now();
+      // Solo grupos del Mundial (A-L), no La Liga (group='LIGA')
       const groupMatches = (ms.matches || []).filter(
         (x) =>
           x.stage === 'GROUP' &&
+          x.group !== 'LIGA' &&
+          x.group !== null &&
           x.status === 'SCHEDULED' &&
           !x.lockedAt &&
           new Date(x.kickoff).getTime() - offsetMs > now,
@@ -206,24 +209,30 @@ export default function HomeScreen() {
       {/* Hub de accesos: Cuadro, Reglas, Inscripcion */}
       <View style={styles.hubGrid}>
         <Link href="/cuadro" asChild>
-          <Pressable style={[styles.hubCard, styles.hubCardAccent]}>
-            <Text style={styles.hubIcon}>🎯</Text>
-            <Text style={styles.hubCardTitle}>Mi Cuadro</Text>
-            <Text style={styles.hubCardSub}>Grupos + campeón</Text>
+          <Pressable style={styles.hubCardWrap}>
+            <View style={[styles.hubCard, styles.hubCardAccent]}>
+              <Text style={styles.hubIcon}>🎯</Text>
+              <Text style={styles.hubCardTitle}>Mi Cuadro</Text>
+              <Text style={styles.hubCardSub}>Grupos + campeón</Text>
+            </View>
           </Pressable>
         </Link>
         <Link href="/reglas" asChild>
-          <Pressable style={styles.hubCard}>
-            <Text style={styles.hubIcon}>📖</Text>
-            <Text style={styles.hubCardTitle}>Reglas</Text>
-            <Text style={styles.hubCardSub}>3-1-0 · cierre</Text>
+          <Pressable style={styles.hubCardWrap}>
+            <View style={styles.hubCard}>
+              <Text style={styles.hubIcon}>📖</Text>
+              <Text style={styles.hubCardTitle}>Reglas</Text>
+              <Text style={styles.hubCardSub}>3-1-0 · cierre</Text>
+            </View>
           </Pressable>
         </Link>
         <Link href="/inscripcion" asChild>
-          <Pressable style={styles.hubCard}>
-            <Text style={styles.hubIcon}>💳</Text>
-            <Text style={styles.hubCardTitle}>Inscripción</Text>
-            <Text style={styles.hubCardSub}>Pago + activar</Text>
+          <Pressable style={styles.hubCardWrap}>
+            <View style={styles.hubCard}>
+              <Text style={styles.hubIcon}>💳</Text>
+              <Text style={styles.hubCardTitle}>Inscripción</Text>
+              <Text style={styles.hubCardSub}>Pago + activar</Text>
+            </View>
           </Pressable>
         </Link>
       </View>
@@ -376,8 +385,8 @@ const styles = StyleSheet.create({
   progressTrack: { height: 4, backgroundColor: colors.bg, borderRadius: 2, marginTop: spacing.sm, overflow: 'hidden' },
   progressBar: { height: '100%', backgroundColor: colors.accent },
   hubGrid: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  hubCardWrap: { flex: 1 },
   hubCard: {
-    flex: 1,
     backgroundColor: colors.bgElev,
     borderColor: colors.border,
     borderWidth: 1,

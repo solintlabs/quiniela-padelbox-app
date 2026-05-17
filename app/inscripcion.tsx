@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { api, type ApiUser } from '@/lib/api';
+import { api, type ApiUser, type ApiRules } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
+
+const WHATSAPP_NUMBER = '34635171649';
+
+function formatFee(amount: number, currency: string): string {
+  if (currency === 'USD') return `$${amount}`;
+  if (currency === 'EUR') return `${amount}€`;
+  if (currency === 'VES' || currency === 'Bs') return `Bs ${amount}`;
+  return `${amount} ${currency}`;
+}
 
 const PAYMENT_METHODS = [
   {
@@ -47,10 +56,12 @@ const PAYMENT_METHODS = [
 
 export default function InscripcionScreen() {
   const [me, setMe] = useState<ApiUser | null>(null);
+  const [rules, setRules] = useState<ApiRules | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     api.me().then((r) => setMe(r.me)).catch(() => {});
+    api.rules().then((r) => setRules(r.rules)).catch(() => {});
   }, []);
 
   async function copy(value: string) {
@@ -87,7 +98,9 @@ export default function InscripcionScreen() {
 
       <View style={styles.feeCard}>
         <Text style={styles.feeLabel}>Cuota</Text>
-        <Text style={styles.feeAmount}>$10</Text>
+        <Text style={styles.feeAmount}>
+          {rules ? formatFee(rules.feeAmount, rules.feeCurrency) : '…'}
+        </Text>
         <Text style={styles.feeDesc}>Cuota única por toda la duración del Mundial</Text>
         <Text style={styles.feeConcept}>
           <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>Concepto: </Text>
@@ -131,10 +144,24 @@ export default function InscripcionScreen() {
       <View style={styles.contactCard}>
         <Text style={styles.contactTitle}>Tras realizar el pago</Text>
         <Text style={styles.contactDesc}>
-          Envíanos el comprobante por email o WhatsApp y activaremos tu cuenta:
+          Envíanos el comprobante por WhatsApp y activamos tu cuenta en minutos.
         </Text>
+        <Pressable
+          onPress={() =>
+            Linking.openURL(
+              `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                'Hola! Acabo de pagar la cuota de la Quiniela PADELBOX × DELISH. Te paso el comprobante 👇',
+              )}`,
+            )
+          }
+          style={styles.waBtn}
+        >
+          <Text style={styles.waBtnText}>💬  Enviar comprobante por WhatsApp →</Text>
+        </Pressable>
         <Pressable onPress={() => Linking.openURL('mailto:info@solint.cloud')}>
-          <Text style={styles.contactLink}>✉️  info@solint.cloud</Text>
+          <Text style={[styles.contactLink, { textAlign: 'center', marginTop: spacing.md }]}>
+            ✉️  o info@solint.cloud
+          </Text>
         </Pressable>
       </View>
 
@@ -172,10 +199,18 @@ const styles = StyleSheet.create({
   rowLabel: { fontFamily: fontFamily.semibold, fontSize: 10, color: colors.muted, letterSpacing: 1.2, width: 90 },
   rowValue: { flex: 1, fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink },
   copy: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.accent },
-  contactCard: { backgroundColor: '#B6FF3C0D', borderColor: colors.accent + '50', borderWidth: 1, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm },
+  contactCard: { backgroundColor: '#25D36612', borderColor: '#25D366' + '70', borderWidth: 2, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm },
   contactTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink },
   contactDesc: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted },
   contactLink: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.accent, marginTop: spacing.xs },
+  waBtn: {
+    backgroundColor: '#25D366',
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  waBtnText: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: '#fff', letterSpacing: 0.3 },
   rulesCard: { borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm },
   rulesTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink },
   rulesText: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted, lineHeight: 20 },

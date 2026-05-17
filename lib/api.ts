@@ -120,7 +120,19 @@ export interface ApiRanking {
   meId: string;
 }
 
+export interface ApiRules {
+  feeAmount: number;
+  feeCurrency: string;
+  pointsExact: number;
+  pointsWinner: number;
+  pointsChampion: number;
+  lockOffsetMin: number;
+  tournamentStartAt: string | null;
+  syncPaused: boolean;
+}
+
 export const api = {
+  rules: () => request<{ rules: ApiRules }>('/api/rules'),
   matches: () => request<{ matches: ApiMatch[] }>('/api/matches'),
   match: (id: string) => request<{ match: ApiMatch }>(`/api/matches/${id}`),
   ranking: () => request<ApiRanking>('/api/ranking'),

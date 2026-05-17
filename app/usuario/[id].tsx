@@ -89,27 +89,29 @@ export default function UserProfile() {
                 m.group === 'LIGA' ? 'La Liga' : m.stage === 'GROUP' && m.group ? `Grupo ${m.group}` : STAGE_LABEL[m.stage] ?? m.stage;
               return (
                 <Link key={p.id} href={`/partido/${m.id}`} asChild>
-                  <Pressable style={[styles.row, i > 0 && styles.rowBorder]}>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={styles.rowMeta}>{stageLabel} · {formatDateTime(m.kickoff)}</Text>
-                      <Text style={styles.rowTeams} numberOfLines={1}>
-                        {m.homeTeam} <Text style={{ color: colors.muted }}>vs</Text> {m.awayTeam}
+                  <Pressable>
+                    <View style={[styles.row, i > 0 && styles.rowBorder]}>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={styles.rowMeta}>{stageLabel} · {formatDateTime(m.kickoff)}</Text>
+                        <Text style={styles.rowTeams} numberOfLines={1}>
+                          {m.homeTeam} <Text style={{ color: colors.muted }}>vs</Text> {m.awayTeam}
+                        </Text>
+                      </View>
+                      <Text style={styles.predScore}>{p.homeScore}–{p.awayScore}</Text>
+                      <Text
+                        style={[
+                          styles.predPts,
+                          {
+                            color:
+                              p.points === 3 ? colors.success :
+                              p.points === 1 ? colors.warning :
+                              colors.muted,
+                          },
+                        ]}
+                      >
+                        {p.points === null ? '—' : `+${p.points}`}
                       </Text>
                     </View>
-                    <Text style={styles.predScore}>{p.homeScore}–{p.awayScore}</Text>
-                    <Text
-                      style={[
-                        styles.predPts,
-                        {
-                          color:
-                            p.points === 3 ? colors.success :
-                            p.points === 1 ? colors.warning :
-                            colors.muted,
-                        },
-                      ]}
-                    >
-                      {p.points === null ? '—' : `+${p.points}`}
-                    </Text>
                   </Pressable>
                 </Link>
               );
