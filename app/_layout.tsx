@@ -7,8 +7,10 @@ import { useEffect } from 'react';
 import { Image, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from '@/lib/theme';
+import { configureNotificationHandler } from '@/lib/push';
 
 SplashScreen.preventAutoHideAsync();
+configureNotificationHandler();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({

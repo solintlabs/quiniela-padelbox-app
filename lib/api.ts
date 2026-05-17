@@ -164,6 +164,11 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ championPick }),
     }),
+  registerPushDevice: (expoToken: string, platform: 'ios' | 'android', appVersion?: string) =>
+    request<{ ok: true }>('/api/me/push-device', {
+      method: 'POST',
+      body: JSON.stringify({ expoToken, platform, appVersion }),
+    }),
 };
 
 export { API_URL };

@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 import { api, type ApiMatch, type ApiRanking } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { formatDateTime, timeLeft } from '@/lib/format';
+import { registerForPushAsync } from '@/lib/push';
 
 export default function HomeScreen() {
   const [ranking, setRanking] = useState<ApiRanking | null>(null);
@@ -46,6 +47,9 @@ export default function HomeScreen() {
 
   useEffect(() => {
     load();
+    // Registrar push token (idempotente — el backend hace upsert).
+    // Pide permisos al usuario la primera vez.
+    registerForPushAsync().catch(() => {});
   }, [load]);
 
   async function onRefresh() {
