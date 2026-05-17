@@ -43,11 +43,12 @@ export default function RankingScreen() {
           </Text>
           {error && <Text style={styles.error}>{error}</Text>}
           <View style={styles.tableHead}>
-            <Text style={[styles.th, { width: 38 }]}>#</Text>
-            <Text style={[styles.th, { flex: 1 }]}>Jugador</Text>
-            <Text style={[styles.th, { width: 32, textAlign: 'right' }]}>PJ</Text>
-            <Text style={[styles.th, { width: 44, textAlign: 'right' }]}>Exact</Text>
-            <Text style={[styles.th, { width: 44, textAlign: 'right' }]}>Pts</Text>
+            <Text style={[styles.th, styles.colPos]}>#</Text>
+            <Text style={[styles.th, styles.colName]}>Jugador</Text>
+            <Text style={[styles.th, styles.colNum]}>PJ</Text>
+            <Text style={[styles.th, styles.colNum]}>Exact</Text>
+            <Text style={[styles.th, styles.colNum]}>Pts</Text>
+            <Text style={[styles.th, styles.colChevron]}>{' '}</Text>
           </View>
         </View>
       }
@@ -58,20 +59,22 @@ export default function RankingScreen() {
         const isMe = item.userId === data?.meId;
         return (
           <Link href={{ pathname: '/usuario/[id]', params: { id: item.userId } }} asChild>
-            <Pressable style={[styles.row, isMe && styles.rowMe]}>
-              <Text style={[styles.cell, { width: 38 }, isMe && styles.cellMe]}>
-                {pos <= 3 ? `${MEDAL[pos - 1]} ${pos}` : isMe ? `▶ ${pos}` : pos}
-              </Text>
-              <Text style={[styles.cell, { flex: 1 }, isMe && styles.cellMe]} numberOfLines={1}>
-                {item.name ?? item.email}
-                {isMe && <Text style={{ color: colors.muted }}>  · tú</Text>}
-              </Text>
-              <Text style={[styles.cell, { width: 32, textAlign: 'right' }]}>{item.played}</Text>
-              <Text style={[styles.cell, { width: 44, textAlign: 'right' }]}>{item.exact}</Text>
-              <Text style={[styles.cell, styles.points, { width: 44, textAlign: 'right' }, isMe && { color: colors.accent }]}>
-                {item.points}
-              </Text>
-              <Text style={[styles.cell, { width: 16, textAlign: 'right', color: colors.muted }]}>›</Text>
+            <Pressable>
+              <View style={[styles.row, isMe && styles.rowMe]}>
+                <Text style={[styles.cell, styles.colPos, isMe && styles.cellMe]}>
+                  {pos <= 3 ? `${MEDAL[pos - 1]} ${pos}` : isMe ? `▶ ${pos}` : pos}
+                </Text>
+                <Text style={[styles.cell, styles.colName, isMe && styles.cellMe]} numberOfLines={1}>
+                  {item.name ?? item.email}
+                  {isMe && <Text style={{ color: colors.muted }}>  · tú</Text>}
+                </Text>
+                <Text style={[styles.cell, styles.colNum]}>{item.played}</Text>
+                <Text style={[styles.cell, styles.colNum]}>{item.exact}</Text>
+                <Text style={[styles.cell, styles.points, styles.colNum, isMe && { color: colors.accent }]}>
+                  {item.points}
+                </Text>
+                <Text style={[styles.cell, styles.colChevron]}>›</Text>
+              </View>
             </Pressable>
           </Link>
         );
@@ -88,13 +91,17 @@ const styles = StyleSheet.create({
   header: { marginBottom: spacing.md },
   title: { fontFamily: fontFamily.display, fontSize: fontSize.display, color: colors.ink },
   subtitle: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.xs, marginBottom: spacing.lg },
-  tableHead: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.sm, borderBottomWidth: 1, borderColor: colors.border },
+  tableHead: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 1, borderColor: colors.border },
   th: { fontFamily: fontFamily.semibold, fontSize: 10, color: colors.muted, letterSpacing: 1.2, textTransform: 'uppercase' },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, gap: spacing.sm, borderBottomWidth: 1, borderColor: colors.border },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, borderBottomWidth: 1, borderColor: colors.border },
   rowMe: { backgroundColor: '#B6FF3C15', borderTopWidth: 2, borderBottomWidth: 2, borderColor: colors.accent + '88', borderRadius: radius.sm, paddingHorizontal: spacing.sm, marginHorizontal: -spacing.sm },
   cell: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink },
   cellMe: { fontFamily: fontFamily.bold },
   points: { fontFamily: fontFamily.display, fontSize: fontSize.base },
+  colPos: { width: 44, paddingRight: 6 },
+  colName: { flex: 1, paddingRight: 6 },
+  colNum: { width: 38, textAlign: 'right', paddingRight: 6 },
+  colChevron: { width: 14, textAlign: 'right', color: colors.muted },
   empty: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted, textAlign: 'center', marginTop: spacing.xxl },
   error: { color: colors.danger, fontFamily: fontFamily.body, fontSize: fontSize.sm, marginTop: spacing.sm },
 });
