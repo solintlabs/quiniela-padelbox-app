@@ -5,6 +5,7 @@ import { api, type ApiMatch, type ApiRanking } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { formatDateTime, timeLeft } from '@/lib/format';
 import { registerForPushAsync } from '@/lib/push';
+import { AliadosStrip } from '@/components/AliadosStrip';
 
 export default function HomeScreen() {
   const [ranking, setRanking] = useState<ApiRanking | null>(null);
@@ -170,24 +171,8 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Banda DELISH protagonista */}
-      <View style={styles.delishBand}>
-        <Image source={require('@/assets/delish.png')} style={styles.delishBandLogo} resizeMode="contain" />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.delishBandEyebrow}>PREMIOS SEMANALES · PRESENTADOS POR</Text>
-          <Text style={styles.delishBandTitle}>
-            Gift cards en <Text style={{ color: '#f14826' }}>DELISH!</Text> y afiliados
-          </Text>
-          <Text style={styles.delishBandBody}>
-            Top pronosticadores se llevan gift cards canjeables en{' '}
-            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>DELISH</Text>,{' '}
-            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>Sole Mio</Text>,{' '}
-            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>Tacoberto</Text>,{' '}
-            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>Vinny&apos;s</Text> y demás
-            restaurantes afiliados del grupo.
-          </Text>
-        </View>
-      </View>
+      {/* Aliados comerciales — premios semanales cortesía de */}
+      <AliadosStrip />
 
       <View style={styles.prizesCard}>
         <Text style={styles.prizesEyebrow}>PREMIOS DEL CAMPEONATO</Text>

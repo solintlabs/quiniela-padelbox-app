@@ -131,8 +131,16 @@ export interface ApiRules {
   syncPaused: boolean;
 }
 
+export interface ApiSponsor {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  url: string | null;
+}
+
 export const api = {
   rules: () => request<{ rules: ApiRules }>('/api/rules'),
+  sponsors: () => request<{ sponsors: ApiSponsor[] }>('/api/sponsors'),
   matches: () => request<{ matches: ApiMatch[] }>('/api/matches'),
   match: (id: string) => request<{ match: ApiMatch }>(`/api/matches/${id}`),
   ranking: () => request<ApiRanking>('/api/ranking'),

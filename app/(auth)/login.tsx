@@ -135,6 +135,21 @@ export default function LoginScreen() {
           </Text>
         </View>
 
+        {/* Info-box explicando el passwordless */}
+        <View style={styles.infoBox}>
+          <Text style={styles.infoEyebrow}>¿CÓMO ENTRO?</Text>
+          <Text style={styles.infoBody}>
+            Pones tu correo y te llega un{' '}
+            <Text style={styles.infoStrong}>código de 6 dígitos por email</Text>. Lo introduces aquí y
+            entras —{' '}
+            <Text style={styles.infoStrong}>sin contraseñas que recordar</Text>. Cada vez que vuelvas
+            a entrar funciona igual.
+          </Text>
+          <Text style={styles.infoFoot}>
+            Tu cuenta se crea sola al introducir el email por primera vez.
+          </Text>
+        </View>
+
         {/* Accesos públicos a Reglas e Inscripción */}
         <View style={styles.publicLinks}>
           <Link href="/reglas" asChild>
@@ -261,6 +276,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xs,
   },
+  infoBox: {
+    backgroundColor: 'rgba(24,24,27,0.6)',
+    borderColor: '#27272A',
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+  },
+  infoEyebrow: { fontFamily: fontFamily.bold, fontSize: 10, color: colors.accent, letterSpacing: 2 },
+  infoBody: { fontFamily: fontFamily.body, fontSize: 12, color: '#D4D4D8', marginTop: 6, lineHeight: 18 },
+  infoStrong: { color: colors.ink, fontFamily: fontFamily.semibold },
+  infoFoot: { fontFamily: fontFamily.body, fontSize: 10, color: colors.muted, marginTop: 6 },
   footer: { marginTop: spacing.xxl, alignItems: 'center' },
   footerText: {
     fontFamily: fontFamily.body,
