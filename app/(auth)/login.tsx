@@ -12,6 +12,7 @@ const WHATSAPP_TEXT = 'Quiero inscribirme en la Quiniela PADELBOX';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +25,7 @@ export default function LoginScreen() {
       await requestLoginCode(cleanEmail);
       router.push({
         pathname: '/(auth)/verify',
-        params: { email: cleanEmail, name: name.trim() },
+        params: { email: cleanEmail, name: name.trim(), phone: phone.trim() },
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error inesperado');
@@ -60,6 +61,20 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Teléfono</Text>
+            <TextInput
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="+34 600 000 000"
+              placeholderTextColor={colors.muted}
+              keyboardType="phone-pad"
+              autoComplete="tel"
+              maxLength={20}
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.fieldGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput
               value={email}
@@ -78,7 +93,7 @@ export default function LoginScreen() {
           {error && <Text style={styles.error}>{error}</Text>}
 
           <Text style={styles.hint}>
-            Si ya tienes cuenta, el nombre solo se guarda la primera vez.
+            Si ya tienes cuenta, nombre y teléfono solo se guardan la primera vez.
           </Text>
         </View>
 

@@ -18,7 +18,7 @@ import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 const CODE_LEN = 6;
 
 export default function VerifyScreen() {
-  const { email = '', name = '' } = useLocalSearchParams<{ email?: string; name?: string }>();
+  const { email = '', name = '', phone = '' } = useLocalSearchParams<{ email?: string; name?: string; phone?: string }>();
   const [digits, setDigits] = useState<string[]>(Array(CODE_LEN).fill(''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +48,7 @@ export default function VerifyScreen() {
     setLoading(true);
     setError(null);
     try {
-      await verifyLoginCode(email, finalCode, name || undefined);
+      await verifyLoginCode(email, finalCode, name || undefined, phone || undefined);
       router.replace('/(tabs)');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Código inválido');

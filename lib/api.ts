@@ -62,10 +62,15 @@ interface VerifyResponse {
   user: { id: string; email: string; name: string | null; role: 'USER' | 'ADMIN'; hasPaid: boolean };
 }
 
-export async function verifyLoginCode(email: string, code: string, name?: string): Promise<VerifyResponse> {
+export async function verifyLoginCode(
+  email: string,
+  code: string,
+  name?: string,
+  phone?: string,
+): Promise<VerifyResponse> {
   const data = await request<VerifyResponse>('/api/auth/code/verify', {
     method: 'POST',
-    body: JSON.stringify({ email, code, name }),
+    body: JSON.stringify({ email, code, name, phone }),
   });
   await setToken(data.token);
   await setEmail(data.user.email);
