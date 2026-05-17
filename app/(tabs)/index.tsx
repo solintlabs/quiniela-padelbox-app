@@ -81,11 +81,6 @@ export default function HomeScreen() {
 
       {error && <Text style={styles.error}>{error}</Text>}
 
-      <View style={styles.heroHeader}>
-        <Text style={styles.heroEyebrow}>RANKING PADELBOX</Text>
-        <Text style={styles.heroTitle}>El Podio</Text>
-      </View>
-
       <View style={styles.podium}>
         <PodiumStep place={2} row={top3[1]} />
         <PodiumStep place={1} row={top3[0]} crown />
@@ -278,9 +273,6 @@ const styles = StyleSheet.create({
   bannerBody: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted },
   bannerCta: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.warning, marginTop: spacing.xs },
   error: { color: colors.danger, fontFamily: fontFamily.body, fontSize: fontSize.sm, textAlign: 'center' },
-  heroHeader: { alignItems: 'center', marginTop: spacing.lg },
-  heroEyebrow: { fontFamily: fontFamily.semibold, fontSize: 10, color: colors.muted, letterSpacing: 1.6 },
-  heroTitle: { fontFamily: fontFamily.display, fontSize: fontSize.display, color: colors.ink, marginTop: spacing.xs },
   podium: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginTop: spacing.lg },
   avatar: { borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm, marginBottom: spacing.xs },
   avatarLetter: { fontFamily: fontFamily.display, fontSize: 20 },

@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ImageBackground, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Button } from '@/components/Button';
 import { Logo } from '@/components/Logo';
 import { requestLoginCode } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
+
+const STADIUM_BG = 'https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=1200&q=70';
 
 const WHATSAPP_NUMBER = '34635171649';
 const WHATSAPP_TEXT = 'Quiero inscribirme en la Quiniela PADELBOX';
@@ -39,14 +41,35 @@ export default function LoginScreen() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.center}>
-          <Logo width={170} />
-          <Text style={styles.title}>Quiniela Mundial 2026</Text>
-          <Text style={styles.subtitle}>Te enviamos un código por email. Sin contraseñas.</Text>
-        </View>
+      <ImageBackground
+        source={{ uri: STADIUM_BG }}
+        style={{ flex: 1 }}
+        imageStyle={{ opacity: 0.45 }}
+      >
+        <View style={styles.overlay} pointerEvents="none" />
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.center}>
+            <Logo width={170} />
+            <Text style={styles.eyebrow}>MUNDIAL 2026</Text>
 
-        <View style={styles.form}>
+            <View style={styles.prizesRow}>
+              <View style={[styles.prizeChip, styles.prizeGold]}>
+                <Text style={styles.prizeIcon}>🥇</Text>
+                <Text style={[styles.prizeAmount, { color: colors.accent }]}>$1.5K</Text>
+              </View>
+              <View style={[styles.prizeChip, styles.prizeSilver]}>
+                <Text style={styles.prizeIcon}>🥈</Text>
+                <Text style={styles.prizeAmount}>$500</Text>
+              </View>
+              <View style={[styles.prizeChip, styles.prizeBronze]}>
+                <Text style={styles.prizeIcon}>🥉</Text>
+                <Text style={[styles.prizeAmount, { color: '#FB923C' }]}>$300</Text>
+              </View>
+            </View>
+            <Text style={styles.prizesHint}>+ premios semanales de patrocinadores</Text>
+          </View>
+
+          <View style={styles.form}>
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Nombre</Text>
             <TextInput
@@ -128,45 +151,70 @@ export default function LoginScreen() {
           <Text style={styles.whatsappText}>Contactar por WhatsApp</Text>
         </Pressable>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            ¿No estás inscrito? Tu cuenta se crea sola. El admin de PADELBOX valida tu pago para
-            activarte.
-          </Text>
-          <Pressable
-            onPress={() => Linking.openURL('https://solint.cloud')}
-            style={{ marginTop: spacing.lg }}
-          >
-            <Text style={styles.devCredit}>
-              Desarrollado por{' '}
-              <Text style={styles.devLink}>Solintlabs · S.Baldini</Text>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              ¿No estás inscrito? Tu cuenta se crea sola. El admin de PADELBOX valida tu pago para
+              activarte.
             </Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+            <Pressable
+              onPress={() => Linking.openURL('https://solint.cloud')}
+              style={{ marginTop: spacing.lg }}
+            >
+              <Text style={styles.devCredit}>
+                Desarrollado por{' '}
+                <Text style={styles.devLink}>Solintlabs · S.Baldini</Text>
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </ImageBackground>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10,10,10,0.78)',
+  },
   scroll: { flexGrow: 1, padding: spacing.xl, paddingTop: spacing.xxl * 2 },
-  center: { alignItems: 'center', marginBottom: spacing.xxl },
-  title: {
-    fontFamily: fontFamily.display,
-    fontSize: fontSize.display,
-    color: colors.ink,
+  center: { alignItems: 'center', marginBottom: spacing.xl },
+  eyebrow: {
+    fontFamily: fontFamily.bold,
+    fontSize: 10,
+    color: colors.accent,
+    letterSpacing: 3,
     marginTop: spacing.xl,
-    textAlign: 'center',
-    letterSpacing: -0.5,
   },
-  subtitle: {
-    fontFamily: fontFamily.body,
-    fontSize: fontSize.sm,
-    color: colors.muted,
-    marginTop: spacing.sm,
-    textAlign: 'center',
+  prizesRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginTop: spacing.lg,
+    width: '100%',
+    maxWidth: 280,
   },
-  form: { gap: spacing.md },
+  prizeChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  prizeGold: { backgroundColor: '#B6FF3C18', borderColor: colors.accent + '66' },
+  prizeSilver: { backgroundColor: 'rgba(24,24,27,0.8)', borderColor: '#3F3F46' },
+  prizeBronze: { backgroundColor: 'rgba(249,115,22,0.15)', borderColor: 'rgba(249,115,22,0.5)' },
+  prizeIcon: { fontSize: 14 },
+  prizeAmount: { fontFamily: fontFamily.display, fontSize: 12, color: colors.ink, marginTop: 2 },
+  prizesHint: { fontFamily: fontFamily.body, fontSize: 10, color: colors.muted, marginTop: spacing.xs },
+  form: {
+    gap: spacing.md,
+    backgroundColor: 'rgba(10,10,10,0.92)',
+    borderColor: '#27272A',
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+  },
   fieldGroup: { gap: spacing.xs },
   label: {
     fontFamily: fontFamily.body,

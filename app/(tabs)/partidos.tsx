@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { MatchCard } from '@/components/MatchCard';
+import { InlinePredictionRow } from '@/components/InlinePredictionRow';
 import { api, type ApiMatch } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
@@ -11,6 +12,7 @@ type Section = { title: string; data: ApiMatch[] };
 
 export default function PartidosScreen() {
   const [matches, setMatches] = useState<ApiMatch[]>([]);
+  const [hasPaid, setHasPaid] = useState<boolean>(false);
   const [tab, setTab] = useState<Tab>('mundial');
   const [refreshing, setRefreshing] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -19,8 +21,9 @@ export default function PartidosScreen() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const data = await api.matches();
+      const [data, m] = await Promise.all([api.matches(), api.me()]);
       setMatches(data.matches);
+      setHasPaid(m.me.hasPaid);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar');
     } finally {
@@ -52,10 +55,11 @@ export default function PartidosScreen() {
     [matches, tab],
   );
 
-  const sections: Section[] = useMemo(() => [
-    { title: 'Próximos · puedes predecir', data: filtered.filter((m) => m.status === 'SCHEDULED' && !m.lockedAt) },
-    { title: 'En juego o cerrados', data: filtered.filter((m) => m.status !== 'FINISHED' && (m.status !== 'SCHEDULED' || m.lockedAt)) },
-    { title: 'Finalizados', data: filtered.filter((m) => m.status === 'FINISHED') },
+  type SectionWithKind = Section & { kind: 'inline' | 'card' };
+  const sections: SectionWithKind[] = useMemo(() => [
+    { kind: 'inline' as const, title: 'Próximos · puedes predecir', data: filtered.filter((m) => m.status === 'SCHEDULED' && !m.lockedAt) },
+    { kind: 'card' as const, title: 'En juego o cerrados', data: filtered.filter((m) => m.status !== 'FINISHED' && (m.status !== 'SCHEDULED' || m.lockedAt)) },
+    { kind: 'card' as const, title: 'Finalizados', data: filtered.filter((m) => m.status === 'FINISHED') },
   ].filter((s) => s.data.length > 0), [filtered]);
 
   return (
@@ -99,9 +103,13 @@ export default function PartidosScreen() {
       renderItem={({ item }) => (
         <View style={{ gap: spacing.sm, marginBottom: spacing.xl }}>
           <Text style={styles.sectionTitle}>{item.title}</Text>
-          {item.data.map((m) => (
-            <MatchCard key={m.id} match={m} />
-          ))}
+          {item.data.map((m) =>
+            item.kind === 'inline' ? (
+              <InlinePredictionRow key={m.id} match={m} canEdit={hasPaid} onSaved={load} />
+            ) : (
+              <MatchCard key={m.id} match={m} />
+            ),
+          )}
         </View>
       )}
       ListEmptyComponent={
