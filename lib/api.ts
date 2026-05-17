@@ -158,7 +158,7 @@ export const api = {
     ),
   userPredictions: (userId: string) =>
     request<{
-      user: { id: string; name: string | null; email: string; hasPaid: boolean; createdAt: string };
+      user: { id: string; name: string | null; email: string; hasPaid: boolean; createdAt: string; championPick: string | null; championLockedAt: string | null };
       isMe: boolean;
       stats: { total: number; points: number; exact: number };
       predictions: Array<{ id: string; homeScore: number; awayScore: number; points: number | null; match: ApiMatch }>;
@@ -189,6 +189,10 @@ export const api = {
     request<{ ok: true }>('/api/me/push-device', {
       method: 'POST',
       body: JSON.stringify({ expoToken, platform, appVersion }),
+    }),
+  unregisterPushDevice: (expoToken: string) =>
+    request<{ ok: true }>(`/api/me/push-device?token=${encodeURIComponent(expoToken)}`, {
+      method: 'DELETE',
     }),
 };
 

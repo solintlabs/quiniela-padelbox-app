@@ -44,6 +44,12 @@ export default function PerfilScreen() {
   }
 
   async function logout() {
+    // Desregistra el push token del backend antes de limpiar la sesión
+    // (sino el device sigue recibiendo notificaciones del user anterior).
+    try {
+      const { unregisterPushAsync } = await import('@/lib/push');
+      await unregisterPushAsync();
+    } catch {}
     await clearToken();
     router.replace('/(auth)/login');
   }

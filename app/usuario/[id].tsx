@@ -68,6 +68,17 @@ export default function UserProfile() {
         <Stat label="Exactos" value={stats.exact} />
       </View>
 
+      {/* Campeon predicho — solo visible si esta congelado (anti-trampa) */}
+      {user.championLockedAt && user.championPick && (
+        <View style={styles.championCard}>
+          <Text style={{ fontSize: 28 }}>🏆</Text>
+          <View>
+            <Text style={styles.championEyebrow}>SU CAMPEÓN</Text>
+            <Text style={styles.championValue}>{user.championPick}</Text>
+          </View>
+        </View>
+      )}
+
       <View>
         <Text style={styles.sectionTitle}>Su quiniela</Text>
         {hiddenCount > 0 && (
@@ -149,6 +160,18 @@ const styles = StyleSheet.create({
   statBox: { flex: 1, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing.md },
   statLabel: { fontFamily: fontFamily.semibold, fontSize: 10, color: colors.muted, letterSpacing: 1.6, textTransform: 'uppercase' },
   statValue: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink, marginTop: spacing.xs },
+  championCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderWidth: 2,
+    borderColor: colors.accent + '70',
+    backgroundColor: colors.accent + '15',
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+  },
+  championEyebrow: { fontFamily: fontFamily.bold, fontSize: 10, color: colors.accent, letterSpacing: 2 },
+  championValue: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink, marginTop: 2 },
   sectionTitle: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink, marginBottom: spacing.sm },
   hidden: { color: colors.muted, fontFamily: fontFamily.body, fontSize: fontSize.xs, marginBottom: spacing.sm },
   list: { backgroundColor: colors.bgElev, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, overflow: 'hidden' },

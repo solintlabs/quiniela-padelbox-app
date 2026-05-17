@@ -82,3 +82,23 @@ export async function registerForPushAsync(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Desregistra el push token del backend (llamar en logout para que ese
+ * dispositivo deje de recibir notificaciones del usuario actual).
+ */
+export async function unregisterPushAsync(): Promise<void> {
+  if (!Device.isDevice) return;
+  const projectId =
+    (Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined)?.projectId ??
+    (Constants.easConfig as { projectId?: string } | undefined)?.projectId;
+  if (!projectId) return;
+
+  try {
+    const r = await Notifications.getExpoPushTokenAsync({ projectId });
+    await api.unregisterPushDevice(r.data);
+  } catch (e) {
+    // Silencioso — si falla no bloqueamos el logout
+    console.warn('[push] unregister fallo:', e instanceof Error ? e.message : e);
+  }
+}
