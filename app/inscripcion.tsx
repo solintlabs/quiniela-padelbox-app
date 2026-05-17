@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { api, type ApiUser, type ApiRules } from '@/lib/api';
+import { api, type ApiUser, type ApiRules, type ApiPaymentMethod } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
 const WHATSAPP_NUMBER = '34635171649';
@@ -13,55 +13,16 @@ function formatFee(amount: number, currency: string): string {
   return `${amount} ${currency}`;
 }
 
-const PAYMENT_METHODS = [
-  {
-    icon: '📲',
-    title: 'Pago Móvil',
-    subtitle: 'Banesco',
-    rows: [
-      { label: 'Teléfono', value: '0412-PRUEBA', copy: true },
-      { label: 'C.I.', value: 'V-00.000.000', copy: true },
-      { label: 'Titular', value: 'S. Baldini' },
-    ],
-  },
-  {
-    icon: '🏦',
-    title: 'Transferencia Banesco',
-    subtitle: 'Cuenta Corriente',
-    rows: [
-      { label: 'Cuenta', value: '0134-0000-0000-0000-0000', copy: true, mono: true },
-      { label: 'Titular', value: 'S. Baldini' },
-      { label: 'C.I.', value: 'V-00.000.000', copy: true },
-    ],
-  },
-  {
-    icon: '💵',
-    title: 'Zelle',
-    subtitle: 'USD',
-    rows: [
-      { label: 'Email', value: 'sergiobaldini6@gmail.com', copy: true, mono: true },
-      { label: 'Titular', value: 'Sergio Baldini' },
-    ],
-  },
-  {
-    icon: '🪙',
-    title: 'Binance Pay',
-    subtitle: 'Cripto',
-    rows: [
-      { label: 'Email Binance', value: 'sergiobaldini6@gmail.com', copy: true, mono: true },
-      { label: 'Moneda', value: 'USDT (BSC / TRC20)' },
-    ],
-  },
-];
-
 export default function InscripcionScreen() {
   const [me, setMe] = useState<ApiUser | null>(null);
   const [rules, setRules] = useState<ApiRules | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<ApiPaymentMethod[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     api.me().then((r) => setMe(r.me)).catch(() => {});
     api.rules().then((r) => setRules(r.rules)).catch(() => {});
+    api.paymentMethods().then((r) => setPaymentMethods(r.methods)).catch(() => setPaymentMethods([]));
   }, []);
 
   async function copy(value: string) {
@@ -110,36 +71,42 @@ export default function InscripcionScreen() {
 
       <Text style={styles.sectionTitle}>Métodos de pago</Text>
 
-      {PAYMENT_METHODS.map((m) => (
-        <View key={m.title} style={styles.method}>
-          <View style={styles.methodHeader}>
-            <Text style={{ fontSize: 22 }}>{m.icon}</Text>
-            <View>
-              <Text style={styles.methodTitle}>{m.title}</Text>
-              <Text style={styles.methodSubtitle}>{m.subtitle}</Text>
-            </View>
-          </View>
-          {m.rows.map((r, i) => (
-            <View key={r.label} style={[styles.row, i > 0 && styles.rowBorder]}>
-              <Text style={styles.rowLabel}>{r.label.toUpperCase()}</Text>
-              <Text
-                style={[
-                  styles.rowValue,
-                  r.mono && { fontFamily: 'Courier' },
-                ]}
-                numberOfLines={1}
-              >
-                {r.value}
-              </Text>
-              {r.copy && (
-                <Pressable onPress={() => copy(r.value)}>
-                  <Text style={styles.copy}>{copied === r.value ? '✓' : 'Copiar'}</Text>
-                </Pressable>
-              )}
-            </View>
-          ))}
+      {paymentMethods === null ? (
+        <Text style={styles.emptyText}>Cargando métodos…</Text>
+      ) : paymentMethods.length === 0 ? (
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyTitle}>Aún no hay métodos configurados</Text>
+          <Text style={styles.emptyText}>
+            Contacta al admin de PADELBOX por WhatsApp para coordinar el pago.
+          </Text>
         </View>
-      ))}
+      ) : (
+        paymentMethods.map((m) => {
+          const fields = Array.isArray(m.fields) ? m.fields : [];
+          return (
+            <View key={m.id} style={styles.method}>
+              <View style={styles.methodHeader}>
+                <Text style={{ fontSize: 22 }}>{m.icon ?? '💳'}</Text>
+                <View>
+                  <Text style={styles.methodTitle}>{m.title}</Text>
+                  {m.subtitle && <Text style={styles.methodSubtitle}>{m.subtitle}</Text>}
+                </View>
+              </View>
+              {fields.map((r, i) => (
+                <View key={`${m.id}-${r.label}-${i}`} style={[styles.row, i > 0 && styles.rowBorder]}>
+                  <Text style={styles.rowLabel}>{r.label.toUpperCase()}</Text>
+                  <Text style={[styles.rowValue, r.mono && { fontFamily: 'Courier' }]} numberOfLines={1}>
+                    {r.value}
+                  </Text>
+                  <Pressable onPress={() => copy(r.value)}>
+                    <Text style={styles.copy}>{copied === r.value ? '✓' : 'Copiar'}</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          );
+        })
+      )}
 
       <View style={styles.contactCard}>
         <Text style={styles.contactTitle}>Tras realizar el pago</Text>
@@ -190,6 +157,9 @@ const styles = StyleSheet.create({
   feeDesc: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted },
   feeConcept: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.sm },
   sectionTitle: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink },
+  emptyBox: { borderColor: colors.border, borderWidth: 1, borderRadius: radius.md, padding: spacing.lg, alignItems: 'center', gap: spacing.sm },
+  emptyTitle: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink, textAlign: 'center' },
+  emptyText: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, textAlign: 'center' },
   method: { backgroundColor: colors.bgElev, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, overflow: 'hidden' },
   methodHeader: { padding: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderBottomWidth: 1, borderColor: colors.border },
   methodTitle: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink },

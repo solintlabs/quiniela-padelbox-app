@@ -4,7 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from '@/lib/theme';
 import { configureNotificationHandler } from '@/lib/push';

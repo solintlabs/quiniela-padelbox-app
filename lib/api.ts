@@ -139,9 +139,25 @@ export interface ApiSponsor {
   url: string | null;
 }
 
+export interface ApiPaymentField {
+  label: string;
+  value: string;
+  mono?: boolean;
+}
+
+export interface ApiPaymentMethod {
+  id: string;
+  type: string;
+  title: string;
+  subtitle: string | null;
+  icon: string | null;
+  fields: ApiPaymentField[] | null;
+}
+
 export const api = {
   rules: () => request<{ rules: ApiRules }>('/api/rules'),
   sponsors: () => request<{ sponsors: ApiSponsor[] }>('/api/sponsors'),
+  paymentMethods: () => request<{ methods: ApiPaymentMethod[] }>('/api/payment-methods'),
   matches: () => request<{ matches: ApiMatch[] }>('/api/matches'),
   match: (id: string) => request<{ match: ApiMatch }>(`/api/matches/${id}`),
   ranking: () => request<ApiRanking>('/api/ranking'),
