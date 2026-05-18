@@ -130,6 +130,7 @@ export interface ApiRules {
   tournamentStartAt: string | null;
   syncPaused: boolean;
   weeklyPrizesText: string | null;
+  championPrizesText: string | null;
 }
 
 export interface ApiSponsor {

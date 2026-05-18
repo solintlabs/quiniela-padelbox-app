@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
-import { api, type ApiMatch, type ApiRanking } from '@/lib/api';
+import { api, type ApiMatch, type ApiRanking, type ApiRules } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { formatDateTime, timeLeft } from '@/lib/format';
 import { registerForPushAsync } from '@/lib/push';
@@ -11,6 +11,7 @@ export default function HomeScreen() {
   const [ranking, setRanking] = useState<ApiRanking | null>(null);
   const [nextMatch, setNextMatch] = useState<ApiMatch | null>(null);
   const [hasPaid, setHasPaid] = useState<boolean>(true);
+  const [rules, setRules] = useState<ApiRules | null>(null);
   const [groupStats, setGroupStats] = useState<{ total: number; filled: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,13 +19,15 @@ export default function HomeScreen() {
   const load = useCallback(async () => {
     try {
       setError(null);
-      const [r, ms, m] = await Promise.all([
+      const [r, ms, m, rl] = await Promise.all([
         api.ranking(),
         api.matches(),
         api.me(),
+        api.rules(),
       ]);
       setRanking(r);
       setHasPaid(m.me.hasPaid);
+      setRules(rl.rules);
       const open = (ms.matches || []).find(
         (x) => x.status === 'SCHEDULED' && !x.lockedAt,
       );
@@ -177,20 +180,26 @@ export default function HomeScreen() {
       <View style={styles.prizesCard}>
         <Text style={styles.prizesEyebrow}>PREMIOS DEL CAMPEONATO</Text>
         <Text style={styles.prizesTitle}>🏆 ¿Qué se llevan los ganadores?</Text>
-        <View style={{ marginTop: spacing.md }}>
-          {[
-            { place: '🥇 1er lugar', reward: 'Premio mayor del podio', highlight: true },
-            { place: '🥈 2º lugar', reward: 'Premio del podio' },
-            { place: '🥉 3er lugar', reward: 'Premio del podio' },
-          ].map((p, i) => (
-            <View key={p.place} style={[styles.prizeRow, i > 0 && { borderTopColor: colors.border, borderTopWidth: 1 }]}>
-              <Text style={styles.prizePlace}>{p.place}</Text>
-              <Text style={[styles.prizeRewardText, p.highlight && { color: colors.accent }]}>{p.reward}</Text>
-            </View>
-          ))}
-        </View>
+        {rules?.championPrizesText ? (
+          /* Admin definió el texto real (post-aprobación Apple) */
+          <Text style={styles.prizesAdminText}>{rules.championPrizesText}</Text>
+        ) : (
+          /* Fallback genérico — sin montos $ (Apple-safe) */
+          <View style={{ marginTop: spacing.md }}>
+            {[
+              { place: '🥇 1er lugar', reward: 'Premio mayor del podio', highlight: true },
+              { place: '🥈 2º lugar', reward: 'Premio del podio' },
+              { place: '🥉 3er lugar', reward: 'Premio del podio' },
+            ].map((p, i) => (
+              <View key={p.place} style={[styles.prizeRow, i > 0 && { borderTopColor: colors.border, borderTopWidth: 1 }]}>
+                <Text style={styles.prizePlace}>{p.place}</Text>
+                <Text style={[styles.prizeRewardText, p.highlight && { color: colors.accent }]}>{p.reward}</Text>
+              </View>
+            ))}
+          </View>
+        )}
         <Text style={styles.prizesFootNote}>
-          Detalles del bote y gift cards semanales en /admin/pagos.
+          + gift cards semanales de DELISH y aliados.
         </Text>
       </View>
 
@@ -414,4 +423,5 @@ const styles = StyleSheet.create({
   prizeAmount: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink },
   prizeRewardText: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink, textAlign: 'right', flex: 1, marginLeft: spacing.md },
   prizesFootNote: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted, marginTop: spacing.md, textAlign: 'center', fontStyle: 'italic' },
+  prizesAdminText: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink, marginTop: spacing.md, lineHeight: 22 },
 });
