@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -22,8 +22,17 @@ export default function VerifyScreen() {
   const [digits, setDigits] = useState<string[]>(Array(CODE_LEN).fill(''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resentAt, setResentAt] = useState<number | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resentJustNow, setResentJustNow] = useState(false);
+  const [cooldown, setCooldown] = useState(0); // segundos restantes
   const refs = useRef<Array<TextInput | null>>([]);
+
+  // Tick del cooldown cada segundo
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   function setDigit(i: number, val: string) {
     const clean = val.replace(/\D/g, '').slice(0, 1);
@@ -60,13 +69,18 @@ export default function VerifyScreen() {
   }
 
   async function resend() {
-    if (resentAt && Date.now() - resentAt < 30_000) return; // anti-spam 30s
-    setResentAt(Date.now());
+    if (resending || cooldown > 0) return;
+    setResending(true);
+    setResentJustNow(false);
     setError(null);
     try {
       await requestLoginCode(email);
+      setResentJustNow(true);
+      setCooldown(30); // 30s anti-spam visible
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error reenviando');
+      setError(e instanceof Error ? e.message : 'No se pudo reenviar. Intenta de nuevo.');
+    } finally {
+      setResending(false);
     }
   }
 
@@ -115,9 +129,22 @@ export default function VerifyScreen() {
         />
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <Pressable onPress={resend} style={styles.resend}>
+        <Pressable
+          onPress={resend}
+          style={[styles.resend, (resending || cooldown > 0) && { opacity: 0.6 }]}
+          disabled={resending || cooldown > 0}
+        >
           <Text style={styles.resendText}>
-            ¿No te llegó? <Text style={styles.resendLink}>Reenviar código</Text>
+            ¿No te llegó?{' '}
+            {resending ? (
+              <Text style={styles.resendLink}>Enviando…</Text>
+            ) : cooldown > 0 ? (
+              <Text style={styles.resendLink}>Reenviar en {cooldown}s</Text>
+            ) : resentJustNow ? (
+              <Text style={[styles.resendLink, { color: colors.success }]}>✓ Reenviado · revisa spam</Text>
+            ) : (
+              <Text style={styles.resendLink}>Reenviar código</Text>
+            )}
           </Text>
         </Pressable>
 
