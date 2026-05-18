@@ -147,6 +147,17 @@ export default function PerfilScreen() {
             <Text style={styles.linkArrow}>→</Text>
           </Pressable>
         </Link>
+
+        {/* Panel admin solo para ADMIN — abre web en navegador */}
+        {me?.role === 'ADMIN' && (
+          <Pressable
+            style={[styles.linkRow, { borderColor: colors.accent + '60', backgroundColor: colors.accent + '0D' }]}
+            onPress={() => Linking.openURL('https://quiniela.solint.cloud/admin')}
+          >
+            <Text style={[styles.linkLabel, { color: colors.accent }]}>⚙️  Panel admin (web)</Text>
+            <Text style={[styles.linkArrow, { color: colors.accent }]}>↗</Text>
+          </Pressable>
+        )}
       </View>
 
       <Button title="Cerrar sesión" variant="secondary" onPress={logout} />
