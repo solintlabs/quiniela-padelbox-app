@@ -3,7 +3,9 @@ import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleS
 import { Link, Stack } from 'expo-router';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { api, type ApiMatch, type ApiUser } from '@/lib/api';
+import * as FileSystem from 'expo-file-system/legacy';
+import { api, type ApiMatch, type ApiUser, API_URL } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { computeGroupStandings, type TeamStanding } from '@/lib/groupStandings';
 import { formatDateTime } from '@/lib/format';
@@ -15,6 +17,7 @@ export default function CuadroScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [sharingImage, setSharingImage] = useState(false);
 
   async function generatePdf(args: { matches: ApiMatch[]; me: ApiUser | null; groups: ReturnType<typeof computeGroupStandings> }) {
     setGeneratingPdf(true);
@@ -31,6 +34,32 @@ export default function CuadroScreen() {
       setError(e instanceof Error ? e.message : 'No se pudo generar el PDF');
     } finally {
       setGeneratingPdf(false);
+    }
+  }
+
+  async function shareImage() {
+    setSharingImage(true);
+    setError(null);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Sesión caducada');
+      const url = `${API_URL}/api/og/cuadro/me`;
+      const target = `${FileSystem.cacheDirectory}cuadro-mundial-2026.png`;
+      const dl = await FileSystem.downloadAsync(url, target, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (dl.status !== 200) throw new Error(`HTTP ${dl.status}`);
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(dl.uri, {
+          mimeType: 'image/png',
+          dialogTitle: 'Compartir mi cuadro',
+        });
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo generar la imagen');
+    } finally {
+      setSharingImage(false);
     }
   }
 
@@ -109,6 +138,13 @@ export default function CuadroScreen() {
                   style={styles.pdfBtn}
                 >
                   <Text style={styles.pdfBtnText}>{generatingPdf ? 'Generando…' : '📄 PDF'}</Text>
+                </Pressable>
+                <Pressable
+                  onPress={shareImage}
+                  disabled={sharingImage}
+                  style={styles.pdfBtn}
+                >
+                  <Text style={styles.pdfBtnText}>{sharingImage ? 'Generando…' : '🖼 Imagen'}</Text>
                 </Pressable>
               </View>
             </View>
