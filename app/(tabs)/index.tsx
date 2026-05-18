@@ -179,16 +179,19 @@ export default function HomeScreen() {
         <Text style={styles.prizesTitle}>🏆 ¿Qué se llevan los ganadores?</Text>
         <View style={{ marginTop: spacing.md }}>
           {[
-            { place: '🥇 1er lugar', amount: '$1.500', highlight: true },
-            { place: '🥈 2º lugar', amount: '$500' },
-            { place: '🥉 3er lugar', amount: '$300' },
+            { place: '🥇 1er lugar', reward: 'Premio mayor del podio', highlight: true },
+            { place: '🥈 2º lugar', reward: 'Premio del podio' },
+            { place: '🥉 3er lugar', reward: 'Premio del podio' },
           ].map((p, i) => (
             <View key={p.place} style={[styles.prizeRow, i > 0 && { borderTopColor: colors.border, borderTopWidth: 1 }]}>
               <Text style={styles.prizePlace}>{p.place}</Text>
-              <Text style={[styles.prizeAmount, p.highlight && { color: colors.accent }]}>{p.amount}</Text>
+              <Text style={[styles.prizeRewardText, p.highlight && { color: colors.accent }]}>{p.reward}</Text>
             </View>
           ))}
         </View>
+        <Text style={styles.prizesFootNote}>
+          Detalles del bote y gift cards semanales en /admin/pagos.
+        </Text>
       </View>
 
       {/* Hub de accesos: Cuadro, Reglas, Inscripcion */}
@@ -409,4 +412,6 @@ const styles = StyleSheet.create({
   prizeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.md },
   prizePlace: { fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.ink },
   prizeAmount: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink },
+  prizeRewardText: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink, textAlign: 'right', flex: 1, marginLeft: spacing.md },
+  prizesFootNote: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted, marginTop: spacing.md, textAlign: 'center', fontStyle: 'italic' },
 });

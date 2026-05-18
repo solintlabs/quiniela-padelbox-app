@@ -67,20 +67,20 @@ export default function LoginScreen() {
             <View style={styles.prizesRow}>
               <View style={[styles.prizeChip, styles.prizeGold]}>
                 <Text style={styles.prizeIcon}>🥇</Text>
-                <Text style={[styles.prizeAmount, { color: colors.accent }]}>$1.5K</Text>
+                <Text style={[styles.prizeAmount, { color: colors.accent }]}>1er lugar</Text>
               </View>
               <View style={[styles.prizeChip, styles.prizeSilver]}>
                 <Text style={styles.prizeIcon}>🥈</Text>
-                <Text style={styles.prizeAmount}>$500</Text>
+                <Text style={styles.prizeAmount}>2do lugar</Text>
               </View>
               <View style={[styles.prizeChip, styles.prizeBronze]}>
                 <Text style={styles.prizeIcon}>🥉</Text>
-                <Text style={[styles.prizeAmount, { color: '#FB923C' }]}>$300</Text>
+                <Text style={[styles.prizeAmount, { color: '#FB923C' }]}>3er lugar</Text>
               </View>
             </View>
             <Text style={styles.prizesHint}>
-              + gift cards en <Text style={{ color: DELISH_ORANGE, fontFamily: fontFamily.semibold }}>DELISH</Text> y
-              afiliados (Sole Mio, Tacoberto, Vinny&apos;s…)
+              Compite por el podio + gift cards{' '}
+              <Text style={{ color: DELISH_ORANGE, fontFamily: fontFamily.semibold }}>DELISH</Text> y afiliados semanales
             </Text>
           </View>
 
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   prizeSilver: { backgroundColor: 'rgba(24,24,27,0.8)', borderColor: '#3F3F46' },
   prizeBronze: { backgroundColor: 'rgba(249,115,22,0.15)', borderColor: 'rgba(249,115,22,0.5)' },
   prizeIcon: { fontSize: 14 },
-  prizeAmount: { fontFamily: fontFamily.display, fontSize: 12, color: colors.ink, marginTop: 2 },
+  prizeAmount: { fontFamily: fontFamily.display, fontSize: 10, color: colors.ink, marginTop: 2, textAlign: 'center' },
   prizesHint: { fontFamily: fontFamily.body, fontSize: 10, color: colors.muted, marginTop: spacing.xs },
   form: {
     gap: spacing.md,
