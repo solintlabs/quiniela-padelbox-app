@@ -17,7 +17,7 @@
     },
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "cloud.solint.quinielapadelbox",
       "buildNumber": "1",
       "icon": "./assets/icon.png",
@@ -68,7 +68,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "apiUrl": "https://quiniela-padelbox.vercel.app",
+      "apiUrl": "https://quiniela.solint.cloud",
       "router": {},
       "eas": {
         "projectId": "eeb72121-4a6d-4398-a009-c07c9dd43dd9"

@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { getToken, setToken, setEmail, clearToken } from './auth';
 
 const API_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string) ?? 'https://quiniela-padelbox.vercel.app';
+  (Constants.expoConfig?.extra?.apiUrl as string) ?? 'https://quiniela.solint.cloud';
 
 export class UnauthenticatedError extends Error {
   constructor() { super('Sesión caducada'); }

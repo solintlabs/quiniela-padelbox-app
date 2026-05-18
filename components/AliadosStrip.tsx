@@ -4,7 +4,7 @@ import { api, type ApiSponsor } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
 /** Construye la URL absoluta del logo (los paths /partners/* viven en la web). */
-const WEB_BASE = 'https://quiniela-padelbox.vercel.app';
+const WEB_BASE = 'https://quiniela.solint.cloud';
 function logoSrc(logoUrl: string) {
   if (logoUrl.startsWith('http')) return logoUrl;
   return WEB_BASE + logoUrl;
