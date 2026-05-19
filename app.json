@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "cloud.solint.quinielapadelbox",
-      "buildNumber": "1",
+      "buildNumber": "9",
       "icon": "./assets/icon.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -27,7 +27,7 @@
     },
     "android": {
       "package": "cloud.solint.quinielapadelbox",
-      "versionCode": 1,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#0A0A0A",
         "foregroundImage": "./assets/adaptive-icon.png"
@@ -64,8 +64,7 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
       "apiUrl": "https://quiniela.solint.cloud",

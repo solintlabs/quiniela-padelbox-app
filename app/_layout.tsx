@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from '@/lib/theme';
 import { configureNotificationHandler } from '@/lib/push';
@@ -32,29 +33,31 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <StatusBar style="light" backgroundColor={colors.bg} />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.bg },
-          headerTintColor: colors.ink,
-          headerTitleStyle: { fontFamily: 'ArchivoBlack_400Regular', color: colors.ink },
-          contentStyle: { backgroundColor: colors.bg },
-          headerShadowVisible: false,
-          headerBackButtonDisplayMode: 'minimal',
-          headerTitleAlign: 'center',
-        }}
-      >
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="partido/[id]" options={{ title: 'Partido' }} />
-        <Stack.Screen name="inscripcion" options={{ title: 'Inscripción' }} />
-        <Stack.Screen name="predecir-grupos" options={{ title: 'Fase de grupos' }} />
-        <Stack.Screen name="reglas" options={{ title: 'Reglas' }} />
-        <Stack.Screen name="usuario/[id]" options={{ title: 'Jugador' }} />
-      </Stack>
-      </View>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SafeAreaProvider>
+        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+          <StatusBar style="light" backgroundColor={colors.bg} />
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: colors.bg },
+              headerTintColor: colors.ink,
+              headerTitleStyle: { fontFamily: 'ArchivoBlack_400Regular', color: colors.ink },
+              contentStyle: { backgroundColor: colors.bg },
+              headerShadowVisible: false,
+              headerBackButtonDisplayMode: 'minimal',
+              headerTitleAlign: 'center',
+            }}
+          >
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="partido/[id]" options={{ title: 'Partido' }} />
+            <Stack.Screen name="inscripcion" options={{ title: 'Inscripción' }} />
+            <Stack.Screen name="predecir-grupos" options={{ title: 'Fase de grupos' }} />
+            <Stack.Screen name="reglas" options={{ title: 'Reglas' }} />
+            <Stack.Screen name="usuario/[id]" options={{ title: 'Jugador' }} />
+          </Stack>
+        </View>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
