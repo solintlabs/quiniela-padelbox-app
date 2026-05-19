@@ -62,7 +62,7 @@ export default function LoginScreen() {
             </View>
             <Text style={styles.cobrandLabel}>PRESENTAN LA QUINIELA</Text>
 
-            <Text style={styles.eyebrow}>MUNDIAL 2026</Text>
+            <Text style={styles.eyebrow}>TORNEO 2026</Text>
 
             <View style={styles.prizesRow}>
               <View style={[styles.prizeChip, styles.prizeGold]}>
@@ -78,10 +78,16 @@ export default function LoginScreen() {
                 <Text style={[styles.prizeAmount, { color: '#FB923C' }]}>3er lugar</Text>
               </View>
             </View>
-            <Text style={styles.prizesHint}>
-              Compite por el podio + gift cards{' '}
-              <Text style={{ color: DELISH_ORANGE, fontFamily: fontFamily.semibold }}>DELISH</Text> y afiliados semanales
-            </Text>
+            {Platform.OS === 'ios' ? (
+              <Text style={styles.prizesHint}>
+                Compite por el podio del torneo
+              </Text>
+            ) : (
+              <Text style={styles.prizesHint}>
+                Compite por el podio + gift cards{' '}
+                <Text style={{ color: DELISH_ORANGE, fontFamily: fontFamily.semibold }}>DELISH</Text> y afiliados semanales
+              </Text>
+            )}
           </View>
 
           <View style={styles.form}>
@@ -142,8 +148,8 @@ export default function LoginScreen() {
             Pones tu correo y te llega un{' '}
             <Text style={styles.infoStrong}>código de 6 dígitos por email</Text>. Lo introduces aquí y
             entras —{' '}
-            <Text style={styles.infoStrong}>sin contraseñas que recordar</Text>. Cada vez que vuelvas
-            a entrar funciona igual.
+            <Text style={styles.infoStrong}>sin contraseñas que recordar</Text>. Tu sesión queda
+            guardada en este dispositivo, así que solo pedimos el código la primera vez.
           </Text>
           <Text style={styles.infoFoot}>
             Tu cuenta se crea sola al introducir el email por primera vez.
@@ -159,13 +165,15 @@ export default function LoginScreen() {
               <Text style={styles.publicDesc}>Cómo funciona</Text>
             </Pressable>
           </Link>
-          <Link href="/inscripcion" asChild>
-            <Pressable style={styles.publicCard}>
-              <Text style={styles.publicIcon}>💳</Text>
-              <Text style={styles.publicLabel}>Inscripción</Text>
-              <Text style={styles.publicDesc}>Métodos de pago</Text>
-            </Pressable>
-          </Link>
+          {Platform.OS !== 'ios' && (
+            <Link href="/inscripcion" asChild>
+              <Pressable style={styles.publicCard}>
+                <Text style={styles.publicIcon}>💳</Text>
+                <Text style={styles.publicLabel}>Inscripción</Text>
+                <Text style={styles.publicDesc}>Métodos de pago</Text>
+              </Pressable>
+            </Link>
+          )}
         </View>
 
         {/* Botón WhatsApp directo */}
@@ -183,8 +191,9 @@ export default function LoginScreen() {
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              ¿No estás inscrito? Tu cuenta se crea sola. El admin de PADELBOX valida tu pago para
-              activarte.
+              {Platform.OS === 'ios'
+                ? 'Tu cuenta se crea automáticamente con el primer inicio de sesión.'
+                : '¿No estás inscrito? Tu cuenta se crea sola. El admin de PADELBOX valida tu pago para activarte.'}
             </Text>
             <Pressable
               onPress={() => Linking.openURL('https://solint.cloud')}
