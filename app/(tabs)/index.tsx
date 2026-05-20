@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import { api, type ApiMatch, type ApiRanking, type ApiRules } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
@@ -77,7 +77,7 @@ export default function HomeScreen() {
       contentContainerStyle={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
-      {!hasPaid && (
+      {!hasPaid && Platform.OS !== 'ios' && (
         <Link href="/inscripcion" asChild>
           <Pressable style={styles.banner}>
             <Text style={styles.bannerTitle}>⚠ Tu cuenta aún no está activa</Text>
@@ -174,34 +174,34 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Aliados comerciales — premios semanales cortesía de */}
+      {/* Aliados comerciales */}
       <AliadosStrip />
 
-      <View style={styles.prizesCard}>
-        <Text style={styles.prizesEyebrow}>PREMIOS DEL CAMPEONATO</Text>
-        <Text style={styles.prizesTitle}>🏆 ¿Qué se llevan los ganadores?</Text>
-        {rules?.championPrizesText ? (
-          /* Admin definió el texto real (post-aprobación Apple) */
-          <Text style={styles.prizesAdminText}>{rules.championPrizesText}</Text>
-        ) : (
-          /* Fallback genérico — sin montos $ (Apple-safe) */
-          <View style={{ marginTop: spacing.md }}>
-            {[
-              { place: '🥇 1er lugar', reward: 'Premio mayor del podio', highlight: true },
-              { place: '🥈 2º lugar', reward: 'Premio del podio' },
-              { place: '🥉 3er lugar', reward: 'Premio del podio' },
-            ].map((p, i) => (
-              <View key={p.place} style={[styles.prizeRow, i > 0 && { borderTopColor: colors.border, borderTopWidth: 1 }]}>
-                <Text style={styles.prizePlace}>{p.place}</Text>
-                <Text style={[styles.prizeRewardText, p.highlight && { color: colors.accent }]}>{p.reward}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-        <Text style={styles.prizesFootNote}>
-          + gift cards semanales de DELISH y aliados.
-        </Text>
-      </View>
+      {Platform.OS !== 'ios' && (
+        <View style={styles.prizesCard}>
+          <Text style={styles.prizesEyebrow}>PREMIOS DEL CAMPEONATO</Text>
+          <Text style={styles.prizesTitle}>🏆 ¿Qué se llevan los ganadores?</Text>
+          {rules?.championPrizesText ? (
+            <Text style={styles.prizesAdminText}>{rules.championPrizesText}</Text>
+          ) : (
+            <View style={{ marginTop: spacing.md }}>
+              {[
+                { place: '🥇 1er lugar', reward: 'Premio mayor del podio', highlight: true },
+                { place: '🥈 2º lugar', reward: 'Premio del podio' },
+                { place: '🥉 3er lugar', reward: 'Premio del podio' },
+              ].map((p, i) => (
+                <View key={p.place} style={[styles.prizeRow, i > 0 && { borderTopColor: colors.border, borderTopWidth: 1 }]}>
+                  <Text style={styles.prizePlace}>{p.place}</Text>
+                  <Text style={[styles.prizeRewardText, p.highlight && { color: colors.accent }]}>{p.reward}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          <Text style={styles.prizesFootNote}>
+            + gift cards semanales de DELISH y aliados.
+          </Text>
+        </View>
+      )}
 
       {/* Hub de accesos: Cuadro, Reglas, Inscripcion */}
       <View style={styles.hubGrid}>
@@ -223,15 +223,17 @@ export default function HomeScreen() {
             </View>
           </Pressable>
         </Link>
-        <Link href="/inscripcion" asChild>
-          <Pressable style={styles.hubCardWrap}>
-            <View style={styles.hubCard}>
-              <Text style={styles.hubIcon}>💳</Text>
-              <Text style={styles.hubCardTitle}>Inscripción</Text>
-              <Text style={styles.hubCardSub}>Pago + activar</Text>
-            </View>
-          </Pressable>
-        </Link>
+        {Platform.OS !== 'ios' && (
+          <Link href="/inscripcion" asChild>
+            <Pressable style={styles.hubCardWrap}>
+              <View style={styles.hubCard}>
+                <Text style={styles.hubIcon}>💳</Text>
+                <Text style={styles.hubCardTitle}>Inscripción</Text>
+                <Text style={styles.hubCardSub}>Pago + activar</Text>
+              </View>
+            </Pressable>
+          </Link>
+        )}
       </View>
 
       <Pressable onPress={() => Linking.openURL('https://solint.cloud')} style={{ marginTop: spacing.xl }}>

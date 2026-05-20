@@ -412,7 +412,7 @@ footer { margin-top: 24px; text-align: center; font-size: 9px; color: #888; bord
 <div class="header">
   <div>
     <div class="brand"><span class="pb">PADELBOX</span><span class="x">×</span><span class="ds">DELISH!</span></div>
-    <h1>Mi Cuadro · Mundial 2026</h1>
+    <h1>Mi Cuadro · Torneo 2026</h1>
     <div class="champion"><span class="lbl">Mi Campeón</span><span class="name">${escapeHtml(champion)}</span></div>
   </div>
   <div class="meta">
@@ -431,7 +431,7 @@ ${
 <h2 class="section-title">Todas mis predicciones · ${totalPredicted}/${totalMatches}</h2>
 ${matchRows}
 
-<footer>PADELBOX × DELISH! · Quiniela del Mundial 2026 · Generado ${generatedAt}</footer>
+<footer>PADELBOX × DELISH! · Quiniela del Torneo 2026 · Generado ${generatedAt}</footer>
 </body></html>`;
 }
 

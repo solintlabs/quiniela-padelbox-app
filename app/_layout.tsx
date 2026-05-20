@@ -35,27 +35,29 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaProvider>
-        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center' }}>
           <StatusBar style="light" backgroundColor={colors.bg} />
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: colors.bg },
-              headerTintColor: colors.ink,
-              headerTitleStyle: { fontFamily: 'ArchivoBlack_400Regular', color: colors.ink },
-              contentStyle: { backgroundColor: colors.bg },
-              headerShadowVisible: false,
-              headerBackButtonDisplayMode: 'minimal',
-              headerTitleAlign: 'center',
-            }}
-          >
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="partido/[id]" options={{ title: 'Partido' }} />
-            <Stack.Screen name="inscripcion" options={{ title: 'Inscripción' }} />
-            <Stack.Screen name="predecir-grupos" options={{ title: 'Fase de grupos' }} />
-            <Stack.Screen name="reglas" options={{ title: 'Reglas' }} />
-            <Stack.Screen name="usuario/[id]" options={{ title: 'Jugador' }} />
-          </Stack>
+          <View style={{ flex: 1, width: '100%', maxWidth: 540, backgroundColor: colors.bg }}>
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: colors.bg },
+                headerTintColor: colors.ink,
+                headerTitleStyle: { fontFamily: 'ArchivoBlack_400Regular', color: colors.ink },
+                contentStyle: { backgroundColor: colors.bg },
+                headerShadowVisible: false,
+                headerBackButtonDisplayMode: 'minimal',
+                headerTitleAlign: 'center',
+              }}
+            >
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="partido/[id]" options={{ title: 'Partido' }} />
+              <Stack.Screen name="inscripcion" options={{ title: 'Inscripción' }} />
+              <Stack.Screen name="predecir-grupos" options={{ title: 'Fase de grupos' }} />
+              <Stack.Screen name="reglas" options={{ title: 'Reglas' }} />
+              <Stack.Screen name="usuario/[id]" options={{ title: 'Jugador' }} />
+            </Stack>
+          </View>
         </View>
       </SafeAreaProvider>
     </GestureHandlerRootView>

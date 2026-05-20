@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Button } from '@/components/Button';
 import { api, type ApiUser, type ApiMatch } from '@/lib/api';
@@ -72,14 +72,16 @@ export default function PerfilScreen() {
       {error && <Text style={styles.error}>{error}</Text>}
 
       <View style={styles.statusCard}>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Estado de inscripción</Text>
-          {me?.hasPaid ? (
-            <Text style={[styles.statusValue, { color: colors.success }]}>✓ Activado</Text>
-          ) : (
-            <Text style={[styles.statusValue, { color: colors.warning }]}>⚠ Pendiente</Text>
-          )}
-        </View>
+        {Platform.OS !== 'ios' && (
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Estado de inscripción</Text>
+            {me?.hasPaid ? (
+              <Text style={[styles.statusValue, { color: colors.success }]}>✓ Activado</Text>
+            ) : (
+              <Text style={[styles.statusValue, { color: colors.warning }]}>⚠ Pendiente</Text>
+            )}
+          </View>
+        )}
         {me?.createdAt && (
           <View style={styles.statusRow}>
             <Text style={styles.statusLabel}>Miembro desde</Text>
@@ -141,12 +143,14 @@ export default function PerfilScreen() {
             <Text style={styles.linkArrow}>→</Text>
           </Pressable>
         </Link>
-        <Link href="/inscripcion" asChild>
-          <Pressable style={styles.linkRow}>
-            <Text style={styles.linkLabel}>💳  Inscripción y pago</Text>
-            <Text style={styles.linkArrow}>→</Text>
-          </Pressable>
-        </Link>
+        {Platform.OS !== 'ios' && (
+          <Link href="/inscripcion" asChild>
+            <Pressable style={styles.linkRow}>
+              <Text style={styles.linkLabel}>💳  Inscripción y pago</Text>
+              <Text style={styles.linkArrow}>→</Text>
+            </Pressable>
+          </Link>
+        )}
 
         {/* Panel admin solo para ADMIN — abre web en navegador */}
         {me?.role === 'ADMIN' && (

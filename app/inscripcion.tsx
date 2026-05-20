@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, Linking } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View, Pressable, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { api, type ApiUser, type ApiRules, type ApiPaymentMethod } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
@@ -24,6 +24,40 @@ export default function InscripcionScreen() {
     api.rules().then((r) => setRules(r.rules)).catch(() => {});
     api.paymentMethods().then((r) => setPaymentMethods(r.methods)).catch(() => setPaymentMethods([]));
   }, []);
+
+  // iOS: no se muestran métodos de pago ni cuotas dentro de la app.
+  // Se redirige al usuario a la web para completar la inscripción.
+  if (Platform.OS === 'ios') {
+    return (
+      <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={styles.scroll}>
+        <View>
+          <Text style={styles.eyebrow}>INSCRIPCIÓN</Text>
+          <Text style={styles.title}>Únete a la quiniela</Text>
+          <Text style={styles.lead}>
+            La inscripción se gestiona desde nuestra web. Allí encontrarás toda la información
+            para participar.
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => Linking.openURL('https://quinielabox.com')}
+          style={styles.waBtn}
+        >
+          <Text style={styles.waBtnText}>Ir a quinielabox.com →</Text>
+        </Pressable>
+        <View style={styles.contactCard}>
+          <Text style={styles.contactTitle}>¿Necesitas ayuda?</Text>
+          <Text style={styles.contactDesc}>
+            Contáctanos para resolver cualquier duda.
+          </Text>
+          <Pressable onPress={() => Linking.openURL('mailto:info@solint.cloud')}>
+            <Text style={[styles.contactLink, { textAlign: 'center', marginTop: spacing.md }]}>
+              ✉️  info@solint.cloud
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    );
+  }
 
   async function copy(value: string) {
     await Clipboard.setStringAsync(value);
@@ -62,10 +96,10 @@ export default function InscripcionScreen() {
         <Text style={styles.feeAmount}>
           {rules ? formatFee(rules.feeAmount, rules.feeCurrency) : '…'}
         </Text>
-        <Text style={styles.feeDesc}>Cuota única por toda la duración del Mundial</Text>
+        <Text style={styles.feeDesc}>Cuota única por toda la duración del torneo</Text>
         <Text style={styles.feeConcept}>
           <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>Concepto: </Text>
-          Quiniela Mundial 2026 — tu nombre
+          Quiniela Torneo 2026 — tu nombre
         </Text>
       </View>
 
@@ -137,7 +171,7 @@ export default function InscripcionScreen() {
         <Text style={styles.rulesText}>
           <Text style={styles.rulesBold}>3 pts</Text> por marcador exacto ·{' '}
           <Text style={styles.rulesBold}>1 pt</Text> si aciertas solo el ganador ·{' '}
-          <Text style={styles.rulesBold}>+25 pts</Text> si aciertas el campeón del Mundial.
+          <Text style={styles.rulesBold}>+25 pts</Text> si aciertas el campeón del torneo.
         </Text>
       </View>
     </ScrollView>

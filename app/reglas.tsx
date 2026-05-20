@@ -1,4 +1,4 @@
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
@@ -23,7 +23,7 @@ export default function ReglasScreen() {
       <Text style={styles.eyebrow}>CÓMO FUNCIONA</Text>
       <Text style={styles.title}>Reglas de la Quiniela</Text>
       <Text style={styles.intro}>
-        Quiniela privada del Mundial 2026 para los socios del club PADELBOX.
+        Quiniela privada del Torneo 2026 para los socios del club PADELBOX.
       </Text>
 
       <Section title="1. Puntuación">
@@ -50,9 +50,9 @@ export default function ReglasScreen() {
         </View>
 
         <View style={styles.bonusBox}>
-          <Text style={styles.bonusTitle}>🏆  Bonus campeón del Mundial</Text>
+          <Text style={styles.bonusTitle}>🏆  Bonus campeón</Text>
           <Text style={styles.body}>
-            Si aciertas al campeón del Mundial 2026, sumas{' '}
+            Si aciertas al campeón del torneo, sumas{' '}
             <Text style={{ color: colors.accent, fontFamily: fontFamily.bold }}>+25 pts</Text> extra.
             Tu pick se configura desde el <Text style={styles.inline}>perfil</Text> y tienes hasta el inicio
             del primer partido para decidir.
@@ -72,7 +72,7 @@ export default function ReglasScreen() {
 
       <Section title="3. Fases del torneo">
         <Text style={styles.body}>
-          El Mundial 2026 tiene <Text style={styles.bold}>104 partidos</Text> en total:
+          El torneo 2026 tiene <Text style={styles.bold}>104 partidos</Text> en total:
         </Text>
         <View style={styles.card}>
           {PHASES.map((p, i) => (
@@ -95,15 +95,17 @@ export default function ReglasScreen() {
         <Text style={styles.bullet}>2. Si persiste, gana quien se inscribió primero.</Text>
       </Section>
 
-      <Section title="5. Pago e inscripción">
-        <Text style={styles.body}>
-          Para enviar pronósticos hay que pagar la cuota única. Métodos aceptados: Pago Móvil,
-          Transferencia Banesco, Zelle, Binance Pay.{' '}
-          <Link href="/inscripcion" asChild>
-            <Text style={styles.inline}>Ver métodos →</Text>
-          </Link>
-        </Text>
-      </Section>
+      {Platform.OS !== 'ios' && (
+        <Section title="5. Pago e inscripción">
+          <Text style={styles.body}>
+            Para enviar pronósticos hay que pagar la cuota única. Métodos aceptados: Pago Móvil,
+            Transferencia Banesco, Zelle, Binance Pay.{' '}
+            <Link href="/inscripcion" asChild>
+              <Text style={styles.inline}>Ver métodos →</Text>
+            </Link>
+          </Text>
+        </Section>
+      )}
 
       <Section title="6. Privacidad de los pronósticos">
         <Text style={styles.body}>
@@ -113,12 +115,27 @@ export default function ReglasScreen() {
         </Text>
       </Section>
 
-      <Section title="7. Premios">
+      {Platform.OS !== 'ios' && (
+        <Section title="7. Premios">
+          <Text style={styles.body}>
+            Los premios se entregan en el club al finalizar el torneo. Ver lista en{' '}
+            <Link href="/inscripcion" asChild>
+              <Text style={styles.inline}>Inscripción</Text>
+            </Link>.
+          </Text>
+        </Section>
+      )}
+
+      <Section title={`${Platform.OS !== 'ios' ? '8' : '5'}. Aviso legal`}>
         <Text style={styles.body}>
-          Los premios se entregan en el club al finalizar el Mundial. Ver lista en{' '}
-          <Link href="/inscripcion" asChild>
-            <Text style={styles.inline}>Inscripción</Text>
-          </Link>.
+          Esta quiniela es una actividad <Text style={styles.bold}>privada, sin ánimo de lucro</Text>,
+          organizada por el club PADELBOX para sus socios y allegados.
+        </Text>
+        <Text style={[styles.body, { marginTop: spacing.sm }]}>
+          <Text style={styles.bold}>Apple Inc. no patrocina, avala, administra ni está asociada
+          de ningún modo</Text> con esta quiniela ni con ningún concurso, sorteo o actividad
+          relacionada que se realice dentro de la app. Cualquier consulta, reclamación o premio
+          se gestiona exclusivamente con el club PADELBOX.
         </Text>
       </Section>
 

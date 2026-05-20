@@ -198,7 +198,7 @@ export default function PartidosScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Partidos</Text>
             <Text style={styles.subtitle}>
-              {tab === 'mundial' ? `Mundial 2026 · ${filtered.length} partidos` : `La Liga · ${filtered.length} partidos`}
+              {tab === 'mundial' ? `Torneo 2026 · ${filtered.length} partidos` : `La Liga · ${filtered.length} partidos`}
             </Text>
             {error && (
               <View style={styles.errorBox}>
@@ -210,7 +210,7 @@ export default function PartidosScreen() {
 
           <View style={styles.tabs}>
             <TabButton
-              label={`🌍 Mundial`}
+              label={`🌍 Torneo`}
               count={counts.mundial}
               active={tab === 'mundial'}
               onPress={() => setTab('mundial')}

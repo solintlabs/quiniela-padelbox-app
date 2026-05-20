@@ -4,13 +4,48 @@
 
 ---
 
+## ⚡ Lee primero — datos y estado actual (última actualización: 2026-05-20)
+
+### Cuentas / IDs de publicación
+| Campo | Valor |
+|---|---|
+| Expo owner | `solintlabs` (GitHub OAuth, email sergiobal1995@gmail.com) |
+| Expo slug | `quiniela-padelbox-app` |
+| Expo projectId | `eeb72121-4a6d-4398-a009-c07c9dd43dd9` |
+| URL proyecto Expo | https://expo.dev/accounts/solintlabs/projects/quiniela-padelbox-app |
+| Apple ID (cuenta dev) | `sergiobal6@hotmail.com` |
+| Apple Team ID | `5AMF3HF2MK` |
+| ascAppId | `6770234104` |
+| Bundle / Package | `cloud.solint.quinielapadelbox` |
+
+### Estado iOS
+- Build enviado a App Store Connect con `--auto-submit`. **App en TestFlight / revisión**.
+- Ficha en App Store Connect: **pendiente de rellenar**.
+- Cuenta de prueba para reviewer: `apple-review@solint.cloud` (OTP por email).
+
+### Estado Android
+- Play Console: **cuenta creada y verificada** (aprobación de identidad 2026-05-18).
+- Build producción: **completado 2026-05-18** (`eas build --platform android --profile production`).
+- Keystore: gestionado por EAS. Backup local pendiente con `eas credentials → Android → production → Download existing keystore`.
+- App en Play Console: **pendiente de crear** (siguiente paso).
+- Service Account JSON para `eas submit`: **pendiente** (se genera tras crear app + vincular Google Cloud).
+- ⚠️ **Closed Testing**: Google exige **12 testers ejecutando 20 días seguidos** antes de producción (regla 2024+). Empezar el conteo cuanto antes en track interno.
+
+### Mercado y disponibilidad
+- Club PADELBOX está en **Estados Unidos** (NO Madrid, ignora cualquier referencia antigua).
+- Audiencia secundaria: venezolanos con Apple ID estadounidense.
+- App Store countries: **USA obligatorio + Spain opcional**. Venezuela NO (usan storefront US).
+- Idioma único: **español (es-ES)**. Apple permite apps solo en español en US storefront.
+
+---
+
 ## Qué es esto
 
 App móvil **QuinielaBOX** — cliente Expo para la quiniela PADELBOX del Mundial 2026. Se conecta al backend Next.js en `https://quiniela.solint.cloud`. Disponible en iOS (TestFlight / App Store) y Android (Google Play).
 
 ---
 
-## Identificadores críticos
+## Identificadores técnicos
 
 | Campo | Valor |
 |---|---|
