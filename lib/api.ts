@@ -211,6 +211,8 @@ export const api = {
     request<{ ok: true }>(`/api/me/push-device?token=${encodeURIComponent(expoToken)}`, {
       method: 'DELETE',
     }),
+  deleteAccount: () =>
+    request<{ ok: true }>('/api/account/delete', { method: 'DELETE' }),
 };
 
 export { API_URL };

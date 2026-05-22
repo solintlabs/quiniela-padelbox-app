@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Button } from '@/components/Button';
 import { api, type ApiUser, type ApiMatch } from '@/lib/api';
@@ -52,6 +52,51 @@ export default function PerfilScreen() {
     } catch {}
     await clearToken();
     router.replace('/(auth)/login');
+  }
+
+  function confirmDeleteAccount() {
+    Alert.alert(
+      'Eliminar cuenta',
+      '¿Seguro? Se borrarán tu perfil, pronósticos, historial y notificaciones. Esta acción es permanente y no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(
+              'Confirmación final',
+              'Esta es tu última oportunidad. ¿Eliminar tu cuenta definitivamente?',
+              [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Sí, eliminar', style: 'destructive', onPress: deleteAccount },
+              ],
+            ),
+        },
+      ],
+    );
+  }
+
+  async function deleteAccount() {
+    try {
+      // Desregistrar push antes de borrar para no dejar tokens huérfanos.
+      try {
+        const { unregisterPushAsync } = await import('@/lib/push');
+        await unregisterPushAsync();
+      } catch {}
+      await api.deleteAccount();
+      await clearToken();
+      Alert.alert(
+        'Cuenta eliminada',
+        'Tu cuenta y todos tus datos han sido eliminados. Gracias por haber participado.',
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }],
+      );
+    } catch (e) {
+      Alert.alert(
+        'Error',
+        e instanceof Error ? e.message : 'No se pudo eliminar la cuenta. Intenta de nuevo.',
+      );
+    }
   }
 
   const totalPoints = predictions.reduce((acc, p) => acc + (p.points ?? 0), 0);
@@ -166,6 +211,15 @@ export default function PerfilScreen() {
 
       <Button title="Cerrar sesión" variant="secondary" onPress={logout} />
 
+      <Pressable
+        onPress={confirmDeleteAccount}
+        style={styles.deleteAccountRow}
+        accessibilityRole="button"
+        accessibilityLabel="Eliminar cuenta"
+      >
+        <Text style={styles.deleteAccountText}>Eliminar cuenta</Text>
+      </Pressable>
+
       <Pressable onPress={() => Linking.openURL('https://solint.cloud')}>
         <Text style={styles.footer}>
           Desarrollado por{' '}
@@ -221,4 +275,14 @@ const styles = StyleSheet.create({
   },
   linkLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink },
   linkArrow: { fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.muted },
+  deleteAccountRow: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  deleteAccountText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.sm,
+    color: colors.danger,
+    textDecorationLine: 'underline',
+  },
 });

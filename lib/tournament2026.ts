@@ -1,15 +1,14 @@
 /**
- * Draw oficial del Mundial 2026 (12 grupos x 4 equipos).
- * Fuente: FIFA Final Draw (5 dic 2025, Kennedy Center, Washington DC).
+ * Draw de la fase de grupos del torneo internacional 2026 (12 grupos x 4 equipos).
  *
- * ESPN no expone el grupo (A..L) en su scoreboard, asi que lo derivamos
+ * ESPN no expone la letra de grupo en su scoreboard, asi que lo derivamos
  * desde el nombre del equipo via lookupGroupForTeam().
  *
  * Si una seleccion no aparece en este mapping, lookupGroupForTeam() devuelve
  * null y la match queda sin grupo (se podra editar a mano desde admin).
  */
 
-export const FIFA_2026_GROUPS: Record<string, readonly string[]> = {
+export const TOURNAMENT_2026_GROUPS: Record<string, readonly string[]> = {
   A: ['Mexico', 'South Africa', 'Korea Republic', 'Czechia'],
   B: ['Canada', 'Bosnia and Herzegovina', 'Qatar', 'Switzerland'],
   C: ['Brazil', 'Morocco', 'Haiti', 'Scotland'],
@@ -33,8 +32,9 @@ function normalize(name: string): string {
     .replace(/[^a-z0-9]/g, '');
 }
 
-// Alias para acomodar variaciones de ESPN vs FIFA. Clave = forma normalizada
-// que puede devolver ESPN; valor = forma canonica que aparece en FIFA_2026_GROUPS.
+// Alias para acomodar variaciones de ESPN vs forma canonica. Clave = forma
+// normalizada que puede devolver ESPN; valor = forma canonica que aparece
+// en TOURNAMENT_2026_GROUPS.
 const ALIASES: Record<string, string> = {
   // Korea
   southkorea: 'Korea Republic',
@@ -78,7 +78,7 @@ const ALIASES: Record<string, string> = {
 // Indice precomputado: nombre normalizado -> letra de grupo (A..L)
 const TEAM_TO_GROUP: Map<string, string> = (() => {
   const map = new Map<string, string>();
-  for (const [group, teams] of Object.entries(FIFA_2026_GROUPS)) {
+  for (const [group, teams] of Object.entries(TOURNAMENT_2026_GROUPS)) {
     for (const team of teams) {
       map.set(normalize(team), group);
     }

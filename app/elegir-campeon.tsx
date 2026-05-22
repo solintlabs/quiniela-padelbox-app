@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { api, type ApiUser } from '@/lib/api';
-import { FIFA_2026_GROUPS } from '@/lib/fifa2026';
+import { TOURNAMENT_2026_GROUPS } from '@/lib/tournament2026';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
-const ALL_TEAMS: Array<{ team: string; group: string }> = Object.entries(FIFA_2026_GROUPS)
+const ALL_TEAMS: Array<{ team: string; group: string }> = Object.entries(TOURNAMENT_2026_GROUPS)
   .flatMap(([group, teams]) => teams.map((t) => ({ team: t, group })))
   .sort((a, b) => a.team.localeCompare(b.team));
 
