@@ -4,7 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { api, type ApiUser, type ApiRules, type ApiPaymentMethod } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
-const WHATSAPP_NUMBER = '34635171649';
+const WHATSAPP_NUMBER = '+17864027294';
 
 function formatFee(amount: number, currency: string): string {
   if (currency === 'USD') return `$${amount}`;
@@ -150,7 +150,7 @@ export default function InscripcionScreen() {
         <Pressable
           onPress={() =>
             Linking.openURL(
-              `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+              `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}?text=${encodeURIComponent(
                 'Hola! Acabo de pagar la cuota de la Quiniela PADELBOX × DELISH. Te paso el comprobante 👇',
               )}`,
             )

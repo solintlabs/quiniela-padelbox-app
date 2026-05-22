@@ -9,7 +9,7 @@ import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 const STADIUM_BG = 'https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=1200&q=70';
 const DELISH_ORANGE = '#f14826';
 
-const WHATSAPP_NUMBER = '34635171649';
+const WHATSAPP_NUMBER = '+17864027294';
 const WHATSAPP_TEXT = 'Quiero inscribirme en la Quiniela PADELBOX';
 
 export default function LoginScreen() {
@@ -187,7 +187,7 @@ export default function LoginScreen() {
         <Pressable
           onPress={() =>
             Linking.openURL(
-              `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_TEXT)}`,
+              `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}?text=${encodeURIComponent(WHATSAPP_TEXT)}`,
             )
           }
           style={styles.whatsapp}
