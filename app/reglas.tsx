@@ -23,7 +23,7 @@ export default function ReglasScreen() {
       <Text style={styles.eyebrow}>CÓMO FUNCIONA</Text>
       <Text style={styles.title}>Reglas de la Quiniela</Text>
       <Text style={styles.intro}>
-        Quiniela privada del Torneo 2026 para los socios del club PADELBOX.
+        Quiniela del Torneo 2026 patrocinada por PADELBOX.
       </Text>
 
       <Section title="1. Puntuación">
@@ -109,7 +109,7 @@ export default function ReglasScreen() {
 
       <Section title="6. Privacidad de los pronósticos">
         <Text style={styles.body}>
-          Los pronósticos de los demás socios <Text style={styles.bold}>solo son visibles tras el
+          Los pronósticos del resto de participantes <Text style={styles.bold}>solo son visibles tras el
           cierre del partido</Text> (15 min antes del kickoff). Antes del cierre, cada uno solo ve los
           suyos. Sin trampas posibles, ya que nadie puede modificar tras el cierre.
         </Text>
@@ -128,14 +128,14 @@ export default function ReglasScreen() {
 
       <Section title={`${Platform.OS !== 'ios' ? '8' : '5'}. Aviso legal`}>
         <Text style={styles.body}>
-          Esta quiniela es una actividad <Text style={styles.bold}>privada, sin ánimo de lucro</Text>,
-          organizada por el club PADELBOX para sus socios y allegados.
+          Esta quiniela es una actividad <Text style={styles.bold}>sin ánimo de lucro</Text>,
+          patrocinada por el complejo de pádel PADELBOX para sus jugadores y público en general.
         </Text>
         <Text style={[styles.body, { marginTop: spacing.sm }]}>
           <Text style={styles.bold}>Apple Inc. no patrocina, avala, administra ni está asociada
           de ningún modo</Text> con esta quiniela ni con ningún concurso, sorteo o actividad
           relacionada que se realice dentro de la app. Cualquier consulta, reclamación o premio
-          se gestiona exclusivamente con el club PADELBOX.
+          se gestiona exclusivamente con PADELBOX.
         </Text>
       </Section>
 

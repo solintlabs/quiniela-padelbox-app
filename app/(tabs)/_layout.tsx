@@ -1,4 +1,4 @@
-import { Image, View } from 'react-native';
+import { Image, Linking, Pressable, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Logo } from '@/components/Logo';
@@ -7,7 +7,14 @@ import { colors, fontFamily } from '@/lib/theme';
 function HeaderCobrand() {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <Logo width={70} />
+      <Pressable
+        onPress={() => Linking.openURL('https://instagram.com/padelbox.ve')}
+        accessibilityRole="link"
+        accessibilityLabel="PADELBOX en Instagram"
+        hitSlop={6}
+      >
+        <Logo width={70} />
+      </Pressable>
       <Image
         source={require('@/assets/delish.png')}
         style={{ width: 50, height: 24 }}

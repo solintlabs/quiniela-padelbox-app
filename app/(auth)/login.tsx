@@ -52,7 +52,14 @@ export default function LoginScreen() {
           <View style={styles.center}>
             {/* Co-branding PADELBOX × DELISH */}
             <View style={styles.cobrandRow}>
-              <Logo width={140} />
+              <Pressable
+                onPress={() => Linking.openURL('https://instagram.com/padelbox.ve')}
+                accessibilityRole="link"
+                accessibilityLabel="PADELBOX en Instagram"
+                hitSlop={6}
+              >
+                <Logo width={140} />
+              </Pressable>
               <Text style={styles.cobrandX}>×</Text>
               <Image
                 source={require('@/assets/delish.png')}
