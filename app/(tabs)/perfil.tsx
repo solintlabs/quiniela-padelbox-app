@@ -197,6 +197,21 @@ export default function PerfilScreen() {
           </Link>
         )}
 
+        {/* En iOS abrimos la web en Safari: cumple guideline 3.1.3
+            (Reader / external account flow) — sin mostrar precios ni
+            metodos de pago dentro del binario. */}
+        {Platform.OS === 'ios' && (
+          <Pressable
+            style={styles.linkRow}
+            onPress={() => Linking.openURL('https://www.quinielabox.com/inscripcion')}
+            accessibilityRole="link"
+            accessibilityLabel="Información de inscripción en quinielabox.com"
+          >
+            <Text style={styles.linkLabel}>💳  Inscripción</Text>
+            <Text style={styles.linkArrow}>↗</Text>
+          </Pressable>
+        )}
+
         {/* Panel admin solo para ADMIN — abre web en navegador */}
         {me?.role === 'ADMIN' && (
           <Pressable
