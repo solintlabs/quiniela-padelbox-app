@@ -215,12 +215,14 @@ export default function PartidosScreen() {
               active={tab === 'mundial'}
               onPress={() => setTab('mundial')}
             />
-            <TabButton
-              label={`🇪🇸 La Liga`}
-              count={counts.liga}
-              active={tab === 'liga'}
-              onPress={() => setTab('liga')}
-            />
+            {counts.liga > 0 && (
+              <TabButton
+                label={`🇪🇸 La Liga`}
+                count={counts.liga}
+                active={tab === 'liga'}
+                onPress={() => setTab('liga')}
+              />
+            )}
           </View>
 
           {hasPaid && dirtyCount > 0 && (
