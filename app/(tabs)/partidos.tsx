@@ -305,10 +305,12 @@ export default function PartidosScreen() {
             accessibilityRole="button"
             accessibilityLabel={`${item.title}, ${isCollapsed ? 'plegado' : 'desplegado'}`}
           >
-            <Text style={styles.sectionTitle}>
-              <Text style={{ color: colors.muted }}>{isCollapsed ? '▶ ' : '▼ '}</Text>
-              {item.title}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+              <Text style={styles.sectionArrow}>{isCollapsed ? '▶' : '▼'}</Text>
+              <Text style={styles.sectionTitle} numberOfLines={1}>
+                {item.title}
+              </Text>
+            </View>
             <Text style={styles.sectionCount}>{filled}/{item.data.length}</Text>
           </Pressable>
           {!isCollapsed && item.data.map((m) =>
@@ -451,15 +453,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
     paddingVertical: spacing.xs,
     marginBottom: spacing.xs,
   },
-  sectionTitle: {
-    fontFamily: fontFamily.semibold,
+  sectionArrow: {
+    fontFamily: fontFamily.body,
     fontSize: 10,
     color: colors.muted,
-    letterSpacing: 1.6,
+    width: 12,
+  },
+  sectionTitle: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 12,
+    color: colors.muted,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
+    flexShrink: 1,
   },
   sectionCount: {
     fontFamily: fontFamily.body,
