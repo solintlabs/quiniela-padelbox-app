@@ -1,26 +1,27 @@
-import { Image, Linking, Pressable, View } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Image, Pressable, View } from 'react-native';
+import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Logo } from '@/components/Logo';
 import { colors, fontFamily } from '@/lib/theme';
 
 function HeaderCobrand() {
+  // Tap en cobrand -> vuelve al tab Inicio (reciclar la zona como atajo
+  // a home, igual que en la web).
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <Pressable
-        onPress={() => Linking.openURL('https://instagram.com/padelbox.ve')}
-        accessibilityRole="link"
-        accessibilityLabel="PADELBOX en Instagram"
-        hitSlop={6}
-      >
-        <Logo width={70} />
-      </Pressable>
+    <Pressable
+      onPress={() => router.navigate('/(tabs)')}
+      accessibilityRole="link"
+      accessibilityLabel="Volver al inicio"
+      hitSlop={6}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+    >
+      <Logo width={70} />
       <Image
         source={require('@/assets/delish.png')}
         style={{ width: 50, height: 24 }}
         resizeMode="contain"
       />
-    </View>
+    </Pressable>
   );
 }
 
