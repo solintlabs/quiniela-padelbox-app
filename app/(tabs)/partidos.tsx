@@ -32,6 +32,17 @@ export default function PartidosScreen() {
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [bulkSaving, setBulkSaving] = useState(false);
+  // Secciones (Grupo A, B…) plegadas. Tap en el header de seccion alterna.
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  function toggleCollapsed(title: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title);
+      else next.add(title);
+      return next;
+    });
+  }
 
   const load = useCallback(async () => {
     try {
@@ -279,10 +290,28 @@ export default function PartidosScreen() {
       }
       data={sections}
       keyExtractor={(s) => s.title}
-      renderItem={({ item }) => (
+      renderItem={({ item }) => {
+        const isCollapsed = collapsed.has(item.title);
+        const filled = item.data.filter((m) => {
+          const v = values[m.id];
+          const ini = initial[m.id];
+          return !!ini || (v && (v.home !== 0 || v.away !== 0));
+        }).length;
+        return (
         <View style={{ gap: spacing.sm, marginBottom: spacing.xl }}>
-          <Text style={styles.sectionTitle}>{item.title}</Text>
-          {item.data.map((m) =>
+          <Pressable
+            onPress={() => toggleCollapsed(item.title)}
+            style={styles.sectionHeader}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.title}, ${isCollapsed ? 'plegado' : 'desplegado'}`}
+          >
+            <Text style={styles.sectionTitle}>
+              <Text style={{ color: colors.muted }}>{isCollapsed ? '▶ ' : '▼ '}</Text>
+              {item.title}
+            </Text>
+            <Text style={styles.sectionCount}>{filled}/{item.data.length}</Text>
+          </Pressable>
+          {!isCollapsed && item.data.map((m) =>
             item.kind === 'inline' ? (
               <InlinePredictionRow
                 key={m.id}
@@ -301,7 +330,8 @@ export default function PartidosScreen() {
             ),
           )}
         </View>
-      )}
+        );
+      }}
       ListEmptyComponent={
         error ? null : !loaded ? (
           <View style={{ alignItems: 'center', marginTop: spacing.xxl }}>
@@ -417,13 +447,24 @@ const styles = StyleSheet.create({
   },
   weeklyEyebrow: { fontFamily: fontFamily.bold, fontSize: 10, color: '#f14826', letterSpacing: 2 },
   weeklyBody: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink, marginTop: spacing.sm, lineHeight: 20 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.xs,
+  },
   sectionTitle: {
     fontFamily: fontFamily.semibold,
     fontSize: 10,
     color: colors.muted,
     letterSpacing: 1.6,
     textTransform: 'uppercase',
-    marginBottom: spacing.xs,
+  },
+  sectionCount: {
+    fontFamily: fontFamily.body,
+    fontSize: 11,
+    color: colors.muted,
   },
   empty: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted, textAlign: 'center', marginTop: spacing.xxl },
   errorBox: {

@@ -2,7 +2,7 @@
   "expo": {
     "name": "QuinielaBOX",
     "slug": "quiniela-padelbox-app",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "quinielapadelbox",
@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "cloud.solint.quinielapadelbox",
-      "buildNumber": "16",
+      "buildNumber": "17",
       "icon": "./assets/icon.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,

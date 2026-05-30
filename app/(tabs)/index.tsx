@@ -174,9 +174,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Aliados comerciales */}
-      <AliadosStrip />
-
       {Platform.OS !== 'ios' && (
         <View style={styles.prizesCard}>
           <Text style={styles.prizesEyebrow}>PREMIOS DEL CAMPEONATO</Text>
@@ -236,6 +233,9 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* Aliados comerciales — al final, cerrando con marca */}
+      <AliadosStrip />
+
       <Pressable onPress={() => Linking.openURL('https://solint.cloud')} style={{ marginTop: spacing.xl }}>
         <Text style={styles.footer}>
           Desarrollado por{' '}
@@ -255,31 +255,34 @@ function PodiumStep({
   row?: ApiRanking['ranking'][number];
   crown?: boolean;
 }) {
-  const heights = { 1: 110, 2: 80, 3: 56 } as const;
+  // Podio compacto para que el dashboard tenga mas room arriba para "Rellena
+  // tu quiniela" y el siguiente partido (antes 110/80/56).
+  const heights = { 1: 72, 2: 52, 3: 36 } as const;
   const initial = row ? (row.name?.[0] ?? row.email[0] ?? '?').toUpperCase() : '—';
 
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      {crown && <Text style={{ fontSize: 20 }}>🥇</Text>}
+      {crown && <Text style={{ fontSize: 16 }}>🥇</Text>}
       <View
         style={[
           styles.avatar,
           place === 1
-            ? { width: 56, height: 56, backgroundColor: colors.accent }
-            : { width: 48, height: 48, backgroundColor: colors.bgElev, borderWidth: 1, borderColor: colors.border },
+            ? { width: 42, height: 42, backgroundColor: colors.accent }
+            : { width: 36, height: 36, backgroundColor: colors.bgElev, borderWidth: 1, borderColor: colors.border },
         ]}
       >
         <Text
           style={[
             styles.avatarLetter,
+            { fontSize: place === 1 ? 16 : 14 },
             place === 1 ? { color: colors.accentFg } : { color: colors.ink },
           ]}
         >
           {initial}
         </Text>
       </View>
-      <Text style={styles.podiumName} numberOfLines={1}>{row?.name ?? row?.email ?? '—'}</Text>
-      <Text style={styles.podiumPts}>{row?.points ?? 0} pts</Text>
+      <Text style={[styles.podiumName, { fontSize: 12 }]} numberOfLines={1}>{row?.name ?? row?.email ?? '—'}</Text>
+      <Text style={[styles.podiumPts, { fontSize: 10 }]}>{row?.points ?? 0} pts</Text>
       <View
         style={[
           styles.podiumStep,
@@ -290,7 +293,8 @@ function PodiumStep({
         <Text
           style={[
             styles.podiumNumber,
-            place === 1 && { color: colors.accent, fontSize: 32 },
+            { fontSize: 18 },
+            place === 1 && { color: colors.accent, fontSize: 22 },
           ]}
         >
           {place}
