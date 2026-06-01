@@ -94,6 +94,8 @@ export interface ApiMatch {
   status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED' | 'CANCELLED';
   lockedAt: string | null;
   predictions?: Array<{ homeScore: number; awayScore: number; points: number | null }>;
+  // Tendencia agregada (% local/empate/visitante). null si <3 predicciones.
+  distribution?: { homePct: number; drawPct: number; awayPct: number } | null;
 }
 
 export interface ApiUser {

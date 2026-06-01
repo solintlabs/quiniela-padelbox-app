@@ -144,6 +144,44 @@ export function InlinePredictionRow({
           </Link>
         </View>
       </View>
+
+      {/* Tendencia agregada de predicciones (% local/empate/visitante).
+          Sin marcadores individuales ni numero total. Solo si hay >=3 preds
+          y el partido no ha finalizado. */}
+      {match.distribution && !isFinished && (
+        <DistributionBar
+          dist={match.distribution}
+          homeTeam={match.homeTeam}
+          awayTeam={match.awayTeam}
+        />
+      )}
+    </View>
+  );
+}
+
+function DistributionBar({
+  dist,
+  homeTeam,
+  awayTeam,
+}: {
+  dist: { homePct: number; drawPct: number; awayPct: number };
+  homeTeam: string;
+  awayTeam: string;
+}) {
+  const { homePct, drawPct, awayPct } = dist;
+  return (
+    <View style={styles.distWrap}>
+      <Text style={styles.distLabel}>CÓMO PREDICEN</Text>
+      <View style={styles.distBar}>
+        {homePct > 0 && <View style={[styles.distSeg, { width: `${homePct}%`, backgroundColor: 'rgba(34,197,94,0.85)' }]} />}
+        {drawPct > 0 && <View style={[styles.distSeg, { width: `${drawPct}%`, backgroundColor: 'rgba(245,158,11,0.85)' }]} />}
+        {awayPct > 0 && <View style={[styles.distSeg, { width: `${awayPct}%`, backgroundColor: 'rgba(59,130,246,0.85)' }]} />}
+      </View>
+      <View style={styles.distLegend}>
+        <Text style={[styles.distLegendText, { textAlign: 'left' }]}>● {homePct}%</Text>
+        <Text style={[styles.distLegendText, { textAlign: 'center' }]}>{drawPct}% empate</Text>
+        <Text style={[styles.distLegendText, { textAlign: 'right' }]}>{awayPct}% ●</Text>
+      </View>
     </View>
   );
 }
@@ -270,4 +308,27 @@ const styles = StyleSheet.create({
   saveBtnText: { fontFamily: fontFamily.display, fontSize: 11, color: colors.accentFg, letterSpacing: 0.3 },
   footerError: { fontFamily: fontFamily.body, fontSize: 11, color: colors.danger },
   footerLink: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted },
+  distWrap: {
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  distLabel: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    color: colors.muted,
+    marginBottom: 5,
+  },
+  distBar: {
+    flexDirection: 'row',
+    height: 14,
+    borderRadius: 4,
+    overflow: 'hidden',
+    backgroundColor: colors.bg,
+  },
+  distSeg: { height: '100%' },
+  distLegend: { flexDirection: 'row', marginTop: 4 },
+  distLegendText: { flex: 1, fontFamily: fontFamily.body, fontSize: 10, color: colors.muted },
 });
