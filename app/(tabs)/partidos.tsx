@@ -34,6 +34,8 @@ export default function PartidosScreen() {
   const [bulkSaving, setBulkSaving] = useState(false);
   // Secciones (Grupo A, B…) plegadas. Tap en el header de seccion alterna.
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // Matches que el usuario ha tocado (permite guardar 0-0 explicito).
+  const [touched, setTouched] = useState<Set<string>>(new Set());
 
   function toggleCollapsed(title: string) {
     setCollapsed((prev) => {
@@ -88,12 +90,23 @@ export default function PartidosScreen() {
     const v = values[id];
     const base = initial[id];
     if (!v) return false;
-    if (!base) return v.home !== 0 || v.away !== 0;
-    return v.home !== base.home || v.away !== base.away;
+    if (base) {
+      // Ya hay predicción guardada: dirty si difiere.
+      return v.home !== base.home || v.away !== base.away;
+    }
+    // Sin predicción guardada: dirty SOLO si el usuario tocó la fila. Asi se
+    // permite guardar un 0-0 explicito (antes 0-0 == "sin tocar").
+    return touched.has(id);
   }
 
   function onPredictionChange(id: string, home: number, away: number) {
     setValues((prev) => ({ ...prev, [id]: { home, away } }));
+    setTouched((prev) => {
+      if (prev.has(id)) return prev;
+      const n = new Set(prev);
+      n.add(id);
+      return n;
+    });
     setErrors((prev) => {
       if (!(id in prev)) return prev;
       const n = { ...prev };
@@ -114,6 +127,11 @@ export default function PartidosScreen() {
     try {
       await api.predict(id, v.home, v.away);
       setInitial((ini) => ({ ...ini, [id]: { home: v.home, away: v.away } }));
+      setTouched((t) => {
+        const n = new Set(t);
+        n.delete(id);
+        return n;
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error';
       setErrors((errs) => ({ ...errs, [id]: msg }));
@@ -140,6 +158,11 @@ export default function PartidosScreen() {
       setInitial((ini) => {
         const n = { ...ini };
         for (const id of dirtyIds) n[id] = { home: values[id].home, away: values[id].away };
+        return n;
+      });
+      setTouched((t) => {
+        const n = new Set(t);
+        dirtyIds.forEach((id) => n.delete(id));
         return n;
       });
       setErrors({});
