@@ -71,14 +71,27 @@ export function InlinePredictionRow({
         </Pressable>
       </Link>
 
-      <View style={styles.teams}>
-        <View style={styles.teamLeft}>
+      {/* Fila de equipos: bandera + nombre completo a cada lado.
+          Los nombres tienen ancho propio (antes se truncaban a 1 letra
+          porque los steppers en medio comian todo el espacio). */}
+      <View style={styles.teamsRow}>
+        <View style={styles.teamSide}>
           {match.homeFlag && <Image source={{ uri: match.homeFlag }} style={styles.flag} />}
-          <Text style={styles.team} numberOfLines={1}>
+          <Text style={styles.teamName} numberOfLines={1}>
             {match.homeTeam}
           </Text>
         </View>
+        <Text style={styles.vs}>vs</Text>
+        <View style={[styles.teamSide, styles.teamSideRight]}>
+          <Text style={[styles.teamName, { textAlign: 'right' }]} numberOfLines={1}>
+            {match.awayTeam}
+          </Text>
+          {match.awayFlag && <Image source={{ uri: match.awayFlag }} style={styles.flag} />}
+        </View>
+      </View>
 
+      {/* Fila de marcador / steppers centrada debajo de los nombres */}
+      <View style={styles.scoreRow}>
         {isFinished ? (
           <Text style={styles.score}>
             {match.homeScore}–{match.awayScore}
@@ -94,17 +107,10 @@ export function InlinePredictionRow({
         ) : (
           <Link href="/inscripcion" asChild>
             <Pressable style={styles.lockedCta}>
-              <Text style={styles.lockedCtaText}>Inscríbete{'\n'}para predecir</Text>
+              <Text style={styles.lockedCtaText}>Inscríbete para predecir</Text>
             </Pressable>
           </Link>
         )}
-
-        <View style={styles.teamRight}>
-          <Text style={[styles.team, { textAlign: 'right' }]} numberOfLines={1}>
-            {match.awayTeam}
-          </Text>
-          {match.awayFlag && <Image source={{ uri: match.awayFlag }} style={styles.flag} />}
-        </View>
       </View>
 
       <View style={styles.footer}>
@@ -120,13 +126,17 @@ export function InlinePredictionRow({
             {saving && <ActivityIndicator size="small" color={colors.muted} />}
             {!saving && dirty && <Text style={styles.footerDirty}>● Sin guardar</Text>}
             {!saving && !dirty && hasInitial && <Text style={styles.footerSaved}>✓ Guardado</Text>}
+            {!saving && !dirty && !hasInitial && <Text style={styles.footerMuted}>Sin pronóstico</Text>}
             {!!error && <Text style={styles.footerError}>{error}</Text>}
           </View>
         ) : (
           <View />
         )}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          {!isLocked && canEdit && dirty && (
+          {/* Boton Guardar: visible si hay cambios (dirty) O si el partido aun
+              no tiene pronostico guardado (asi se puede guardar el 0-0 por
+              defecto directamente, sin tener que tocar los steppers). */}
+          {!isLocked && canEdit && (dirty || !hasInitial) && (
             <Pressable
               onPress={() => onSave(match.id)}
               disabled={saving}
@@ -252,6 +262,12 @@ const styles = StyleSheet.create({
   meta: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, flex: 1 },
   metaMuted: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted },
   metaAccent: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.accent },
+  teamsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
+  teamSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
+  teamSideRight: { justifyContent: 'flex-end' },
+  vs: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted },
+  teamName: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink, flexShrink: 1 },
+  scoreRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: spacing.sm, marginBottom: 2 },
   teams: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   teamLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   teamRight: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.sm },
@@ -304,6 +320,7 @@ const styles = StyleSheet.create({
   footerScore: { color: colors.ink, fontFamily: fontFamily.semibold },
   footerSaved: { fontFamily: fontFamily.semibold, fontSize: 11, color: colors.success },
   footerDirty: { fontFamily: fontFamily.semibold, fontSize: 11, color: colors.warning },
+  footerMuted: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted },
   saveBtn: { backgroundColor: colors.accent, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.sm },
   saveBtnText: { fontFamily: fontFamily.display, fontSize: 11, color: colors.accentFg, letterSpacing: 0.3 },
   footerError: { fontFamily: fontFamily.body, fontSize: 11, color: colors.danger },
