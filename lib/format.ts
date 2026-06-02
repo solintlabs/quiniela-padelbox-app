@@ -1,3 +1,6 @@
+// La quiniela usa siempre hora de Caracas (GMT-4), independiente de la zona
+// horaria del telefono, para que las horas de los partidos coincidan con las
+// anunciadas por la organizacion.
 const DT = new Intl.DateTimeFormat('es-ES', {
   weekday: 'short',
   day: '2-digit',
@@ -5,6 +8,7 @@ const DT = new Intl.DateTimeFormat('es-ES', {
   hour: '2-digit',
   minute: '2-digit',
   hour12: false,
+  timeZone: 'America/Caracas',
 });
 
 export const formatDateTime = (d: string | Date) => DT.format(new Date(d));
