@@ -10,6 +10,18 @@ import { STAGE_LABEL } from '@/lib/format';
 const MUNDIAL_GROUPS_ARR = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 const MUNDIAL_GROUPS = new Set(MUNDIAL_GROUPS_ARR);
 const KNOCKOUT_STAGES = ['R32', 'R16', 'QF', 'SF', 'THIRD', 'FINAL'] as const;
+const KNOCKOUT_SET = new Set<string>(KNOCKOUT_STAGES);
+
+// Equipos placeholder de eliminatorias (bracket sin definir). No mostrar
+// hasta que ESPN ponga los equipos reales.
+const isPlaceholder = (s: string) =>
+  /group\s|round of|third place|\bwinner\b|\brunner\b|\bwin\b|\bplace\b|\b\d(st|nd|rd|th)\b/i.test(s);
+const isMundialMatch = (m: { group: string | null; stage: string; homeTeam: string; awayTeam: string }) => {
+  if (m.group && MUNDIAL_GROUPS.has(m.group)) return true;
+  // Eliminatoria con equipos reales
+  if (KNOCKOUT_SET.has(m.stage) && !isPlaceholder(m.homeTeam) && !isPlaceholder(m.awayTeam)) return true;
+  return false;
+};
 
 type Tab = 'mundial' | 'liga';
 type Section = { title: string; data: ApiMatch[] };
@@ -184,13 +196,13 @@ export default function PartidosScreen() {
     let mundial = 0, liga = 0;
     for (const m of matches) {
       if (m.group === 'LIGA') liga++;
-      else if (m.group && MUNDIAL_GROUPS.has(m.group)) mundial++;
+      else if (isMundialMatch(m)) mundial++;
     }
     return { mundial, liga };
   }, [matches]);
 
   const filtered = useMemo(
-    () => matches.filter((m) => (tab === 'liga' ? m.group === 'LIGA' : m.group && MUNDIAL_GROUPS.has(m.group))),
+    () => matches.filter((m) => (tab === 'liga' ? m.group === 'LIGA' : isMundialMatch(m))),
     [matches, tab],
   );
 
