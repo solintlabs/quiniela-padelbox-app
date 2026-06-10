@@ -12,6 +12,8 @@ interface Props {
   awayValue: number;
   onChange: (matchId: string, home: number, away: number) => void;
   dirty: boolean;
+  /** Guardado en este cliente (aunque match.predictions aún no refrescó). */
+  savedLocally?: boolean;
   saving: boolean;
   error: string | null;
   onSave: (matchId: string) => void;
@@ -29,12 +31,13 @@ export function InlinePredictionRow({
   awayValue,
   onChange,
   dirty,
+  savedLocally,
   saving,
   error,
   onSave,
 }: Props) {
   const initial = match.predictions?.[0];
-  const hasInitial = !!initial;
+  const hasInitial = !!initial || !!savedLocally;
 
   const isFinished = match.status === 'FINISHED';
   const isLockedByTime = new Date(match.kickoff).getTime() - 15 * 60_000 <= Date.now();

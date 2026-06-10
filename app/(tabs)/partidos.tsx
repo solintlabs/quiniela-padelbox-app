@@ -48,6 +48,14 @@ export default function PartidosScreen() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   // Matches que el usuario ha tocado (permite guardar 0-0 explicito).
   const [touched, setTouched] = useState<Set<string>>(new Set());
+  // Matches guardados en este cliente (para mostrar "guardado" al instante).
+  const [savedNew, setSavedNew] = useState<Set<string>>(new Set());
+  // Mensaje de éxito temporal.
+  const [okMsg, setOkMsg] = useState<string | null>(null);
+  function flashOk(msg: string) {
+    setOkMsg(msg);
+    setTimeout(() => setOkMsg(null), 2600);
+  }
 
   function toggleCollapsed(title: string) {
     setCollapsed((prev) => {
@@ -139,11 +147,13 @@ export default function PartidosScreen() {
     try {
       await api.predict(id, v.home, v.away);
       setInitial((ini) => ({ ...ini, [id]: { home: v.home, away: v.away } }));
+      setSavedNew((s) => new Set(s).add(id));
       setTouched((t) => {
         const n = new Set(t);
         n.delete(id);
         return n;
       });
+      flashOk('✓ Pronóstico guardado');
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error';
       setErrors((errs) => ({ ...errs, [id]: msg }));
@@ -172,12 +182,18 @@ export default function PartidosScreen() {
         for (const id of dirtyIds) n[id] = { home: values[id].home, away: values[id].away };
         return n;
       });
+      setSavedNew((s) => {
+        const n = new Set(s);
+        dirtyIds.forEach((id) => n.add(id));
+        return n;
+      });
       setTouched((t) => {
         const n = new Set(t);
         dirtyIds.forEach((id) => n.delete(id));
         return n;
       });
       setErrors({});
+      flashOk(`✓ ${dirtyIds.length} pronóstico${dirtyIds.length !== 1 ? 's' : ''} guardado${dirtyIds.length !== 1 ? 's' : ''}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error';
       setErrors((errs) => {
@@ -235,6 +251,7 @@ export default function PartidosScreen() {
   }, [filtered, tab]);
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <FlatList
       style={{ backgroundColor: colors.bg }}
       contentContainerStyle={styles.scroll}
@@ -358,6 +375,7 @@ export default function PartidosScreen() {
                 awayValue={values[m.id]?.away ?? 0}
                 onChange={onPredictionChange}
                 dirty={isDirty(m.id)}
+                savedLocally={savedNew.has(m.id)}
                 saving={savingIds.has(m.id) || bulkSaving}
                 error={errors[m.id] ?? null}
                 onSave={saveOne}
@@ -380,6 +398,12 @@ export default function PartidosScreen() {
         )
       }
     />
+    {okMsg && (
+      <View style={styles.toast} pointerEvents="none">
+        <Text style={styles.toastText}>{okMsg}</Text>
+      </View>
+    )}
+    </View>
   );
 }
 
@@ -446,6 +470,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   dirtyBarText: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.warning },
+  toast: {
+    position: 'absolute',
+    top: 16,
+    alignSelf: 'center',
+    backgroundColor: colors.success,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
+  toastText: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: '#fff' },
   saveAllBtn: {
     backgroundColor: colors.accent,
     paddingHorizontal: spacing.lg,
