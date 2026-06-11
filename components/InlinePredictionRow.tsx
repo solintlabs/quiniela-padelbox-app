@@ -61,9 +61,16 @@ export function InlinePredictionRow({
     >
       <Link href={`/partido/${match.id}`} asChild>
         <Pressable style={styles.headerRow}>
-          <Text style={styles.meta} numberOfLines={1}>
-            {stageLabel} · {formatDateTime(match.kickoff)}
-          </Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.meta} numberOfLines={1}>
+              {stageLabel} · {formatDateTime(match.kickoff)}
+            </Text>
+            {match.venue && (
+              <Text style={styles.venue} numberOfLines={1}>
+                📍 {match.venue}
+              </Text>
+            )}
+          </View>
           {isFinished ? (
             <PointsBadge points={initial?.points ?? null} />
           ) : isLocked ? (
@@ -261,8 +268,9 @@ const styles = StyleSheet.create({
     borderColor: colors.warning + 'AA',
     backgroundColor: colors.warning + '12',
   },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  meta: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, flex: 1 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  meta: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted },
+  venue: { fontFamily: fontFamily.body, fontSize: 10, color: colors.muted, opacity: 0.85, marginTop: 1 },
   metaMuted: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted },
   metaAccent: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.accent },
   teamsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },

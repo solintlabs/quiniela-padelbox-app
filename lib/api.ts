@@ -91,6 +91,8 @@ export interface ApiMatch {
   awayFlag: string | null;
   homeScore: number | null;
   awayScore: number | null;
+  /** "Estadio Azteca · Mexico City" — dónde se juega (null si no se sabe). */
+  venue?: string | null;
   status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED' | 'CANCELLED';
   lockedAt: string | null;
   predictions?: Array<{ homeScore: number; awayScore: number; points: number | null }>;
