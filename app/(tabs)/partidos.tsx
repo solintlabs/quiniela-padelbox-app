@@ -28,6 +28,22 @@ type Section = { title: string; data: ApiMatch[] };
 
 type PendingState = { home: number; away: number };
 
+// Cómo organizar la lista del Mundial: por grupo (default), por jornada
+// (J1/J2/J3 de fase de grupos) o por fecha (cronológico, un día por sección).
+type ViewMode = 'grupo' | 'jornada' | 'fecha';
+const VIEW_MODES: Array<{ key: ViewMode; label: string }> = [
+  { key: 'grupo', label: 'Por grupo' },
+  { key: 'jornada', label: 'Por jornada' },
+  { key: 'fecha', label: 'Por fecha' },
+];
+
+const dayFmt = new Intl.DateTimeFormat('es-ES', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'America/Caracas',
+});
+
 export default function PartidosScreen() {
   const [matches, setMatches] = useState<ApiMatch[]>([]);
   const [me, setMe] = useState<ApiUser | null>(null);
@@ -166,9 +182,19 @@ export default function PartidosScreen() {
     }
   }
 
+  // ¿Se puede aún predecir este partido? (mismo criterio que el server)
+  function isEditableMatch(m: ApiMatch): boolean {
+    if (m.status !== 'SCHEDULED' || m.lockedAt) return false;
+    return new Date(m.kickoff).getTime() - 15 * 60_000 > Date.now();
+  }
+
   async function saveAll() {
-    const dirtyIds = Object.keys(values).filter(isDirty);
+    // Solo partidos aún editables (los bloqueados serían rechazados igual).
+    const editable = new Set(matches.filter(isEditableMatch).map((m) => m.id));
+    const dirtyIds = Object.keys(values).filter((id) => editable.has(id) && isDirty(id));
     if (dirtyIds.length === 0) return;
+    // Snapshot AHORA: si el user toca un stepper mientras el batch está en
+    // vuelo, el baseline queda con lo enviado, no con el valor nuevo.
     const payload = dirtyIds.map((id) => ({
       matchId: id,
       homeScore: values[id].home,
@@ -179,7 +205,7 @@ export default function PartidosScreen() {
       await api.predictBatch(payload);
       setInitial((ini) => {
         const n = { ...ini };
-        for (const id of dirtyIds) n[id] = { home: values[id].home, away: values[id].away };
+        for (const p of payload) n[p.matchId] = { home: p.homeScore, away: p.awayScore };
         return n;
       });
       setSavedNew((s) => {
@@ -206,7 +232,11 @@ export default function PartidosScreen() {
     }
   }
 
-  const dirtyCount = Object.keys(values).filter(isDirty).length;
+  const dirtyCount = useMemo(() => {
+    const editable = new Set(matches.filter(isEditableMatch).map((m) => m.id));
+    return Object.keys(values).filter((id) => editable.has(id) && isDirty(id)).length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, values, initial, touched]);
 
   const counts = useMemo(() => {
     let mundial = 0, liga = 0;
@@ -222,25 +252,72 @@ export default function PartidosScreen() {
     [matches, tab],
   );
 
+  const [viewMode, setViewMode] = useState<ViewMode>('grupo');
+
   type SectionWithKind = Section & { kind: 'inline' | 'card' };
   const sections: SectionWithKind[] = useMemo(() => {
     if (tab === 'mundial') {
-      // Por grupo A-L + rondas eliminatorias. Todos como 'inline' (editable
-      // si esta abierto, read-only si esta cerrado / finalizado).
+      // Todos como 'inline' (editable si esta abierto, read-only si cerrado).
+      const groupStage = filtered.filter((m) => m.group && MUNDIAL_GROUPS.has(m.group));
+      const knockoutSections: SectionWithKind[] = [];
+      for (const stage of KNOCKOUT_STAGES) {
+        const stageMatches = filtered.filter((m) => m.stage === stage);
+        if (stageMatches.length > 0) {
+          knockoutSections.push({ kind: 'inline', title: STAGE_LABEL[stage] ?? stage, data: stageMatches });
+        }
+      }
+
+      if (viewMode === 'jornada') {
+        // Dentro de cada grupo, sus partidos por kickoff se reparten de 2 en 2
+        // → Jornada 1 / 2 / 3.
+        const byJornada = new Map<number, ApiMatch[]>();
+        for (const g of MUNDIAL_GROUPS_ARR) {
+          const gm = groupStage
+            .filter((m) => m.group === g)
+            .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());
+          gm.forEach((m, i) => {
+            const j = Math.min(3, Math.floor(i / 2) + 1);
+            const arr = byJornada.get(j) ?? [];
+            arr.push(m);
+            byJornada.set(j, arr);
+          });
+        }
+        const out: SectionWithKind[] = [...byJornada.keys()].sort((a, b) => a - b).map((j) => ({
+          kind: 'inline' as const,
+          title: `Jornada ${j}`,
+          data: byJornada
+            .get(j)!
+            .slice()
+            .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()),
+        }));
+        return [...out, ...knockoutSections];
+      }
+
+      if (viewMode === 'fecha') {
+        // Cronológico: una sección por día (hora de Caracas).
+        const chrono = filtered
+          .slice()
+          .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());
+        const out: SectionWithKind[] = [];
+        for (const m of chrono) {
+          const raw = dayFmt.format(new Date(m.kickoff));
+          const title = raw.charAt(0).toUpperCase() + raw.slice(1);
+          const last = out[out.length - 1];
+          if (last && last.title === title) last.data.push(m);
+          else out.push({ kind: 'inline', title, data: [m] });
+        }
+        return out;
+      }
+
+      // Por grupo (default): A-L + rondas eliminatorias.
       const out: SectionWithKind[] = [];
       for (const g of MUNDIAL_GROUPS_ARR) {
-        const groupMatches = filtered.filter((m) => m.group === g);
+        const groupMatches = groupStage.filter((m) => m.group === g);
         if (groupMatches.length > 0) {
           out.push({ kind: 'inline', title: `Grupo ${g}`, data: groupMatches });
         }
       }
-      for (const stage of KNOCKOUT_STAGES) {
-        const stageMatches = filtered.filter((m) => m.stage === stage);
-        if (stageMatches.length > 0) {
-          out.push({ kind: 'inline', title: STAGE_LABEL[stage] ?? stage, data: stageMatches });
-        }
-      }
-      return out;
+      return [...out, ...knockoutSections];
     }
     // La Liga: estilo clasico (proximos / cerrados / finalizados)
     return [
@@ -248,7 +325,7 @@ export default function PartidosScreen() {
       { kind: 'card' as const, title: 'En juego o cerrados', data: filtered.filter((m) => m.status !== 'FINISHED' && (m.status !== 'SCHEDULED' || m.lockedAt)) },
       { kind: 'card' as const, title: 'Finalizados', data: filtered.filter((m) => m.status === 'FINISHED') },
     ].filter((s) => s.data.length > 0);
-  }, [filtered, tab]);
+  }, [filtered, tab, viewMode]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -287,6 +364,25 @@ export default function PartidosScreen() {
               />
             )}
           </View>
+
+          {/* Selector de vista — solo tab Mundial */}
+          {tab === 'mundial' && (
+            <View style={styles.viewModes}>
+              {VIEW_MODES.map((vm) => (
+                <Pressable
+                  key={vm.key}
+                  onPress={() => setViewMode(vm.key)}
+                  style={[styles.viewModeBtn, viewMode === vm.key && styles.viewModeBtnActive]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: viewMode === vm.key }}
+                >
+                  <Text style={[styles.viewModeText, viewMode === vm.key && styles.viewModeTextActive]}>
+                    {vm.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
 
           {hasPaid && dirtyCount > 0 && (
             <View style={styles.dirtyBar}>
@@ -457,6 +553,23 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: { color: colors.ink },
   tabCount: { color: colors.muted, fontFamily: fontFamily.body },
+  viewModes: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    backgroundColor: colors.bgElev,
+    borderRadius: radius.md,
+    padding: 3,
+    marginBottom: spacing.lg,
+    alignSelf: 'flex-start',
+  },
+  viewModeBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+  },
+  viewModeBtnActive: { backgroundColor: colors.accent },
+  viewModeText: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.muted },
+  viewModeTextActive: { color: colors.accentFg },
   dirtyBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
