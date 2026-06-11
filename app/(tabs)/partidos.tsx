@@ -188,10 +188,18 @@ export default function PartidosScreen() {
     return new Date(m.kickoff).getTime() - 15 * 60_000 > Date.now();
   }
 
+  // ¿Tiene pronóstico guardado? (del server o guardado en este cliente)
+  function isSavedMatch(m: ApiMatch): boolean {
+    return !!m.predictions?.[0] || savedNew.has(m.id);
+  }
+
   async function saveAll() {
-    // Solo partidos aún editables (los bloqueados serían rechazados igual).
-    const editable = new Set(matches.filter(isEditableMatch).map((m) => m.id));
-    const dirtyIds = Object.keys(values).filter((id) => editable.has(id) && isDirty(id));
+    // Guarda TODO lo editable tal y como se ve: lo modificado (dirty) Y los
+    // partidos sin pronóstico guardado aunque no se hayan tocado (su 0-0
+    // visible cuenta como pronóstico). Los bloqueados no se envían.
+    const dirtyIds = matches
+      .filter((m) => isEditableMatch(m) && (isDirty(m.id) || !isSavedMatch(m)) && values[m.id])
+      .map((m) => m.id);
     if (dirtyIds.length === 0) return;
     // Snapshot AHORA: si el user toca un stepper mientras el batch está en
     // vuelo, el baseline queda con lo enviado, no con el valor nuevo.
@@ -232,11 +240,18 @@ export default function PartidosScreen() {
     }
   }
 
-  const dirtyCount = useMemo(() => {
-    const editable = new Set(matches.filter(isEditableMatch).map((m) => m.id));
-    return Object.keys(values).filter((id) => editable.has(id) && isDirty(id)).length;
+  const { dirtyCount, toSaveCount } = useMemo(() => {
+    let dirty = 0;
+    let toSave = 0;
+    for (const m of matches) {
+      if (!isEditableMatch(m)) continue;
+      const d = isDirty(m.id);
+      if (d) dirty += 1;
+      if (d || !isSavedMatch(m)) toSave += 1;
+    }
+    return { dirtyCount: dirty, toSaveCount: toSave };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matches, values, initial, touched]);
+  }, [matches, values, initial, touched, savedNew]);
 
   const counts = useMemo(() => {
     let mundial = 0, liga = 0;
@@ -387,11 +402,11 @@ export default function PartidosScreen() {
           {hasPaid && dirtyCount > 0 && (
             <View style={styles.dirtyBar}>
               <Text style={styles.dirtyBarText}>
-                ● {dirtyCount} sin guardar
+                ● {dirtyCount} sin guardar{toSaveCount > dirtyCount ? ` (+${toSaveCount - dirtyCount} en 0-0)` : ''}
               </Text>
               <Pressable onPress={saveAll} disabled={bulkSaving} style={[styles.saveAllBtn, bulkSaving && { opacity: 0.5 }]}>
                 <Text style={styles.saveAllBtnText}>
-                  {bulkSaving ? 'Guardando…' : `Guardar todo (${dirtyCount})`}
+                  {bulkSaving ? 'Guardando…' : `Guardar todo (${toSaveCount})`}
                 </Text>
               </Pressable>
             </View>
