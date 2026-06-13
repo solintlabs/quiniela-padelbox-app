@@ -116,6 +116,26 @@ export default function PartidosScreen() {
     load();
   }, [load]);
 
+  // Refresco silencioso: actualiza SOLO marcador/estado de los partidos sin
+  // tocar lo que el usuario esta editando (values/initial/touched). Para ver
+  // los goles en vivo sin tener que deslizar para refrescar.
+  const silentRefreshMatches = useCallback(async () => {
+    try {
+      const data = await api.matches();
+      setMatches(data.matches);
+    } catch {
+      // silencioso — si falla, el siguiente intento o el pull-to-refresh
+    }
+  }, []);
+
+  // Auto-poll cada 60s mientras haya al menos un partido EN VIVO.
+  const hasLive = useMemo(() => matches.some((m) => m.status === 'LIVE'), [matches]);
+  useEffect(() => {
+    if (!hasLive) return;
+    const id = setInterval(silentRefreshMatches, 60_000);
+    return () => clearInterval(id);
+  }, [hasLive, silentRefreshMatches]);
+
   async function onRefresh() {
     setRefreshing(true);
     await load();
