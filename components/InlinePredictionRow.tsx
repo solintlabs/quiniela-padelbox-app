@@ -107,7 +107,16 @@ export function InlinePredictionRow({
             {match.homeScore}–{match.awayScore}
           </Text>
         ) : isLocked ? (
-          <Text style={styles.scoreMuted}>– vs –</Text>
+          match.status === 'LIVE' && match.homeScore !== null && match.awayScore !== null ? (
+            <View style={styles.liveRow}>
+              <Text style={styles.score}>
+                {match.homeScore}–{match.awayScore}
+              </Text>
+              <Text style={styles.liveBadge}>● EN VIVO</Text>
+            </View>
+          ) : (
+            <Text style={styles.scoreMuted}>– vs –</Text>
+          )
         ) : canEdit ? (
           <View style={styles.steppers}>
             <Stepper value={homeValue} onChange={(v) => onChange(match.id, clamp(v), awayValue)} disabled={saving} />
@@ -124,13 +133,15 @@ export function InlinePredictionRow({
       </View>
 
       <View style={styles.footer}>
-        {isFinished && initial ? (
+        {(isFinished || isLocked) && initial ? (
           <Text style={styles.footerLeft}>
             Tu pronóstico:{' '}
             <Text style={styles.footerScore}>
               {initial.homeScore}–{initial.awayScore}
             </Text>
           </Text>
+        ) : isLocked && !initial && canEdit ? (
+          <Text style={styles.footerMuted}>No pronosticaste este partido</Text>
         ) : !isLocked && canEdit ? (
           <View style={styles.footerLeftRow}>
             {saving && <ActivityIndicator size="small" color={colors.muted} />}
@@ -286,6 +297,8 @@ const styles = StyleSheet.create({
   team: { fontFamily: fontFamily.semibold, fontSize: fontSize.base, color: colors.ink, flex: 1 },
   score: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink, minWidth: 70, textAlign: 'center' },
   scoreMuted: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.muted, minWidth: 70, textAlign: 'center' },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  liveBadge: { fontFamily: fontFamily.bold, fontSize: 10, color: colors.success, letterSpacing: 1 },
   scoreDash: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted },
   steppers: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stepperBox: { flexDirection: 'row', alignItems: 'center', gap: 2 },
