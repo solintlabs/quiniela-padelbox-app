@@ -120,6 +120,8 @@ export interface ApiRanking {
     played: number;
     exact: number;
     points: number;
+    // Movimiento desde el ultimo snapshot: >0 subio, <0 bajo, 0 igual, null nuevo.
+    movement?: number | null;
   }>;
   meId: string;
 }

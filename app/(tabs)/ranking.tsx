@@ -6,6 +6,14 @@ import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 
+/** Flecha de movimiento de posicion (verde sube / roja baja / gris igual). */
+function Movement({ m }: { m?: number | null }) {
+  if (m === null || m === undefined) return null;
+  if (m > 0) return <Text style={styles.moveUp}>▲{m}</Text>;
+  if (m < 0) return <Text style={styles.moveDown}>▼{-m}</Text>;
+  return <Text style={styles.moveSame}>–</Text>;
+}
+
 export default function RankingScreen() {
   const [data, setData] = useState<ApiRanking | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -61,9 +69,12 @@ export default function RankingScreen() {
           <Link href={{ pathname: '/usuario/[id]', params: { id: item.userId } }} asChild>
             <Pressable>
               <View style={[styles.row, isMe && styles.rowMe]}>
-                <Text style={[styles.cell, styles.colPos, isMe && styles.cellMe]}>
-                  {pos <= 3 ? `${MEDAL[pos - 1]} ${pos}` : isMe ? `▶ ${pos}` : pos}
-                </Text>
+                <View style={[styles.colPos, { flexDirection: 'row', alignItems: 'center', gap: 3 }]}>
+                  <Text style={[styles.cell, isMe && styles.cellMe]}>
+                    {pos <= 3 ? `${MEDAL[pos - 1]} ${pos}` : isMe ? `▶ ${pos}` : pos}
+                  </Text>
+                  <Movement m={item.movement} />
+                </View>
                 <Text style={[styles.cell, styles.colName, isMe && styles.cellMe]} numberOfLines={1}>
                   {item.name ?? item.email}
                   {isMe && <Text style={{ color: colors.muted }}>  · tú</Text>}
@@ -98,7 +109,10 @@ const styles = StyleSheet.create({
   cell: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink },
   cellMe: { fontFamily: fontFamily.bold },
   points: { fontFamily: fontFamily.display, fontSize: fontSize.base },
-  colPos: { width: 44, paddingRight: 6 },
+  colPos: { width: 62, paddingRight: 6 },
+  moveUp: { fontFamily: fontFamily.bold, fontSize: 9, color: colors.success },
+  moveDown: { fontFamily: fontFamily.bold, fontSize: 9, color: colors.danger },
+  moveSame: { fontFamily: fontFamily.body, fontSize: 9, color: colors.muted },
   colName: { flex: 1, paddingRight: 6 },
   colNum: { width: 38, textAlign: 'right', paddingRight: 6 },
   colChevron: { width: 14, textAlign: 'right', color: colors.muted },
