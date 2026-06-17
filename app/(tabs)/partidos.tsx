@@ -288,6 +288,7 @@ export default function PartidosScreen() {
   );
 
   const [viewMode, setViewMode] = useState<ViewMode>('grupo');
+  const [hideFinished, setHideFinished] = useState(false);
 
   type SectionWithKind = Section & { kind: 'inline' | 'card' };
   const sections: SectionWithKind[] = useMemo(() => {
@@ -362,6 +363,19 @@ export default function PartidosScreen() {
     ].filter((s) => s.data.length > 0);
   }, [filtered, tab, viewMode]);
 
+  const finishedCount = useMemo(
+    () => filtered.filter((m) => m.status === 'FINISHED').length,
+    [filtered],
+  );
+  // Secciones visibles: si se ocultan finalizados, se filtran de cada sección
+  // y las que quedan vacías desaparecen.
+  const visibleSections = useMemo(() => {
+    if (!hideFinished) return sections;
+    return sections
+      .map((s) => ({ ...s, data: s.data.filter((m) => m.status !== 'FINISHED') }))
+      .filter((s) => s.data.length > 0);
+  }, [sections, hideFinished]);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <FlatList
@@ -419,6 +433,20 @@ export default function PartidosScreen() {
             </View>
           )}
 
+          {/* Ocultar partidos finalizados */}
+          {finishedCount > 0 && (
+            <Pressable
+              onPress={() => setHideFinished((v) => !v)}
+              style={styles.hideFinishedBtn}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: hideFinished }}
+            >
+              <Text style={[styles.hideFinishedText, hideFinished && styles.hideFinishedTextActive]}>
+                {hideFinished ? '☑' : '☐'} Ocultar finalizados ({finishedCount})
+              </Text>
+            </Pressable>
+          )}
+
           {hasPaid && dirtyCount > 0 && (
             <View style={styles.dirtyBar}>
               <Text style={styles.dirtyBarText}>
@@ -471,7 +499,7 @@ export default function PartidosScreen() {
           )}
         </View>
       }
-      data={sections}
+      data={visibleSections}
       keyExtractor={(s) => s.title}
       renderItem={({ item }) => {
         const isCollapsed = collapsed.has(item.title);
@@ -588,6 +616,14 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: { color: colors.ink },
   tabCount: { color: colors.muted, fontFamily: fontFamily.body },
+  hideFinishedBtn: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  hideFinishedText: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.muted },
+  hideFinishedTextActive: { color: colors.accent },
   viewModes: {
     flexDirection: 'row',
     gap: spacing.xs,
