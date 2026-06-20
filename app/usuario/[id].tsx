@@ -11,6 +11,7 @@ export default function UserProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [desc, setDesc] = useState(true); // recientes primero por defecto
 
   const load = useCallback(async () => {
     try {
@@ -93,8 +94,19 @@ export default function UserProfile() {
             </Text>
           </View>
         ) : (
+          <View>
+            <Pressable onPress={() => setDesc((d) => !d)} style={styles.sortBtn}>
+              <Text style={styles.sortBtnText}>
+                {desc ? '▼ Más recientes primero' : '▲ Más antiguos primero'}
+              </Text>
+            </Pressable>
           <View style={styles.list}>
-            {predictions.map((p, i) => {
+            {[...predictions]
+              .sort((a, b) => {
+                const diff = new Date(a.match.kickoff).getTime() - new Date(b.match.kickoff).getTime();
+                return desc ? -diff : diff;
+              })
+              .map((p, i) => {
               const m = p.match;
               const stageLabel =
                 m.group === 'LIGA' ? 'La Liga' : m.stage === 'GROUP' && m.group ? `Grupo ${m.group}` : STAGE_LABEL[m.stage] ?? m.stage;
@@ -127,6 +139,7 @@ export default function UserProfile() {
                 </Link>
               );
             })}
+          </View>
           </View>
         )}
       </View>
@@ -173,6 +186,8 @@ const styles = StyleSheet.create({
   championEyebrow: { fontFamily: fontFamily.bold, fontSize: 10, color: colors.accent, letterSpacing: 2 },
   championValue: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink, marginTop: 2 },
   sectionTitle: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink, marginBottom: spacing.sm },
+  sortBtn: { alignSelf: 'flex-end', paddingVertical: 6, paddingHorizontal: spacing.sm, marginBottom: spacing.sm },
+  sortBtnText: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.muted },
   hidden: { color: colors.muted, fontFamily: fontFamily.body, fontSize: fontSize.xs, marginBottom: spacing.sm },
   list: { backgroundColor: colors.bgElev, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
