@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import { api, type ApiRanking } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
@@ -75,10 +75,15 @@ export default function RankingScreen() {
                   </Text>
                   <Movement m={item.movement} />
                 </View>
-                <Text style={[styles.cell, styles.colName, isMe && styles.cellMe]} numberOfLines={1}>
-                  {item.name ?? item.email}
-                  {isMe && <Text style={{ color: colors.muted }}>  · tú</Text>}
-                </Text>
+                <View style={[styles.colName, styles.nameWrap]}>
+                  {item.championFlag && (
+                    <Image source={{ uri: item.championFlag }} style={styles.champFlag} />
+                  )}
+                  <Text style={[styles.cell, isMe && styles.cellMe]} numberOfLines={1}>
+                    {item.name ?? item.email}
+                    {isMe && <Text style={{ color: colors.muted }}>  · tú</Text>}
+                  </Text>
+                </View>
                 <Text style={[styles.cell, styles.colNum]}>{item.played}</Text>
                 <Text style={[styles.cell, styles.colNum]}>{item.exact}</Text>
                 <Text style={[styles.cell, styles.points, styles.colNum, isMe && { color: colors.accent }]}>
@@ -114,6 +119,8 @@ const styles = StyleSheet.create({
   moveDown: { fontFamily: fontFamily.bold, fontSize: 9, color: colors.danger },
   moveSame: { fontFamily: fontFamily.body, fontSize: 9, color: colors.muted },
   colName: { flex: 1, paddingRight: 6 },
+  nameWrap: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  champFlag: { width: 16, height: 16, borderRadius: 3 },
   colNum: { width: 38, textAlign: 'right', paddingRight: 6 },
   colChevron: { width: 14, textAlign: 'right', color: colors.muted },
   empty: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted, textAlign: 'center', marginTop: spacing.xxl },

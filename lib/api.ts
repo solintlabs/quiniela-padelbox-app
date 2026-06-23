@@ -125,6 +125,9 @@ export interface ApiRanking {
     points: number;
     // Movimiento desde el ultimo snapshot: >0 subio, <0 bajo, 0 igual, null nuevo.
     movement?: number | null;
+    // Campeon elegido (solo si congelado) + bandera, para verlo en el ranking.
+    champion?: string | null;
+    championFlag?: string | null;
   }>;
   meId: string;
 }
