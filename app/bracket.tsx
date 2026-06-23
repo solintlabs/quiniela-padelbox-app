@@ -129,9 +129,17 @@ function BracketMatch({ match: m }: { match: ApiMatch }) {
     >
       <View style={styles.matchRow}>
         <TeamSide team={m.homeTeam} flag={m.homeFlag} align="left" />
-        <Text style={styles.score}>
-          {finished || live ? `${m.homeScore ?? 0}–${m.awayScore ?? 0}` : 'vs'}
-        </Text>
+        {finished && m.finalHomeScore != null &&
+        (m.finalHomeScore !== m.homeScore || m.finalAwayScore !== m.awayScore) ? (
+          <View style={{ alignItems: 'center' }}>
+            <Text style={styles.score}>{m.finalHomeScore}–{m.finalAwayScore}</Text>
+            <Text style={styles.reg90}>90&apos;: {m.homeScore}–{m.awayScore}</Text>
+          </View>
+        ) : (
+          <Text style={styles.score}>
+            {finished || live ? `${m.homeScore ?? 0}–${m.awayScore ?? 0}` : 'vs'}
+          </Text>
+        )}
         <TeamSide team={m.awayTeam} flag={m.awayFlag} align="right" />
       </View>
       <View style={styles.matchMeta}>
@@ -173,6 +181,7 @@ const styles = StyleSheet.create({
   teamNamePlaceholder: { color: colors.muted, fontStyle: 'italic' },
   flag: { width: 20, height: 20, borderRadius: 3 },
   score: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink, paddingHorizontal: spacing.sm },
+  reg90: { fontFamily: fontFamily.body, fontSize: 9, color: colors.muted },
   matchMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.sm, gap: spacing.sm },
   metaText: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted },
   live: { color: colors.success, fontFamily: fontFamily.bold },

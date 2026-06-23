@@ -91,6 +91,9 @@ export interface ApiMatch {
   awayFlag: string | null;
   homeScore: number | null;
   awayScore: number | null;
+  /** Resultado final con prórroga/penales (el que cuenta es homeScore/awayScore a 90'). */
+  finalHomeScore?: number | null;
+  finalAwayScore?: number | null;
   /** "Estadio Azteca · Mexico City" — dónde se juega (null si no se sabe). */
   venue?: string | null;
   status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED' | 'CANCELLED';

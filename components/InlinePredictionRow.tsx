@@ -103,9 +103,21 @@ export function InlinePredictionRow({
       {/* Fila de marcador / steppers centrada debajo de los nombres */}
       <View style={styles.scoreRow}>
         {isFinished ? (
-          <Text style={styles.score}>
-            {match.homeScore}–{match.awayScore}
-          </Text>
+          match.finalHomeScore != null &&
+          (match.finalHomeScore !== match.homeScore || match.finalAwayScore !== match.awayScore) ? (
+            <View style={{ alignItems: 'center' }}>
+              <Text style={styles.score}>
+                {match.finalHomeScore}–{match.finalAwayScore}
+              </Text>
+              <Text style={styles.reg90}>
+                90&apos;: {match.homeScore}–{match.awayScore} (cuenta)
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.score}>
+              {match.homeScore}–{match.awayScore}
+            </Text>
+          )
         ) : isLocked ? (
           match.status === 'LIVE' && match.homeScore !== null && match.awayScore !== null ? (
             <View style={styles.liveRow}>
@@ -296,6 +308,7 @@ const styles = StyleSheet.create({
   flag: { width: 24, height: 24, borderRadius: 4 },
   team: { fontFamily: fontFamily.semibold, fontSize: fontSize.base, color: colors.ink, flex: 1 },
   score: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink, minWidth: 70, textAlign: 'center' },
+  reg90: { fontFamily: fontFamily.body, fontSize: 9, color: colors.muted, marginTop: 1 },
   scoreMuted: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.muted, minWidth: 70, textAlign: 'center' },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   liveBadge: { fontFamily: fontFamily.bold, fontSize: 10, color: colors.success, letterSpacing: 1 },
