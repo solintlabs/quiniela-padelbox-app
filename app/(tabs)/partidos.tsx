@@ -121,18 +121,28 @@ export default function PartidosScreen() {
   // los goles en vivo sin tener que deslizar para refrescar.
   const silentRefreshMatches = useCallback(async () => {
     try {
-      const data = await api.matches();
-      setMatches(data.matches);
+      // Modo ligero: solo marcador/estado (sin distribucion) -> mucho menos
+      // CPU en el backend, que es el endpoint mas sondeado.
+      const data = await api.matches(true);
+      setMatches((prev) => {
+        const byId = new Map(prev.map((m) => [m.id, m]));
+        // Conserva la distribucion previa (el modo light la trae null, pero
+        // en partidos en vivo ya no cambia).
+        return data.matches.map((nm) => {
+          const old = byId.get(nm.id);
+          return old ? { ...nm, distribution: old.distribution } : nm;
+        });
+      });
     } catch {
       // silencioso — si falla, el siguiente intento o el pull-to-refresh
     }
   }, []);
 
-  // Auto-poll cada 60s mientras haya al menos un partido EN VIVO.
+  // Auto-poll cada 2 min mientras haya al menos un partido EN VIVO.
   const hasLive = useMemo(() => matches.some((m) => m.status === 'LIVE'), [matches]);
   useEffect(() => {
     if (!hasLive) return;
-    const id = setInterval(silentRefreshMatches, 60_000);
+    const id = setInterval(silentRefreshMatches, 120_000);
     return () => clearInterval(id);
   }, [hasLive, silentRefreshMatches]);
 

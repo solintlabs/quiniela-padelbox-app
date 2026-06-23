@@ -165,7 +165,10 @@ export const api = {
   rules: () => request<{ rules: ApiRules }>('/api/rules'),
   sponsors: () => request<{ sponsors: ApiSponsor[] }>('/api/sponsors'),
   paymentMethods: () => request<{ methods: ApiPaymentMethod[] }>('/api/payment-methods'),
-  matches: () => request<{ matches: ApiMatch[] }>('/api/matches'),
+  // light=true: para el auto-refresco en vivo (marcador/estado, sin
+  // distribucion). Ahorra CPU en el backend.
+  matches: (light?: boolean) =>
+    request<{ matches: ApiMatch[] }>(`/api/matches${light ? '?light=1' : ''}`),
   match: (id: string) => request<{ match: ApiMatch }>(`/api/matches/${id}`),
   ranking: () => request<ApiRanking>('/api/ranking'),
   me: () => request<{ me: ApiUser }>('/api/me'),
