@@ -27,7 +27,10 @@ export default function ReglasScreen() {
       </Text>
 
       <Section title="1. Puntuación">
-        <Text style={styles.body}>Por cada partido, comparamos tu pronóstico con el resultado final:</Text>
+        <Text style={styles.body}>
+          Por cada partido, comparamos tu pronóstico con el resultado a los{' '}
+          <Text style={styles.strong}>90 minutos (tiempo reglamentario)</Text>:
+        </Text>
         <View style={styles.card}>
           {RULES.map((r, i) => (
             <View key={r.title} style={[styles.ruleRow, i > 0 && styles.ruleRowBorder]}>
@@ -47,6 +50,17 @@ export default function ReglasScreen() {
               </View>
             </View>
           ))}
+        </View>
+
+        <View style={styles.warnBox}>
+          <Text style={styles.warnTitle}>⏱️  Todo se cuenta a los 90 minutos</Text>
+          <Text style={styles.body}>
+            Los marcadores valen por el resultado al final de los{' '}
+            <Text style={styles.strong}>90 minutos reglamentarios</Text> (más el añadido del árbitro).
+            En eliminatorias, la <Text style={styles.strong}>prórroga y los penales NO cuentan</Text>.
+            Ejemplo: si va 1-1 a los 90 min y luego se define en prórroga, para la quiniela ese partido
+            es <Text style={styles.strong}>empate 1-1</Text>.
+          </Text>
         </View>
 
         <View style={styles.bonusBox}>
@@ -180,6 +194,9 @@ const styles = StyleSheet.create({
   phaseDetail: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
   bonusBox: { backgroundColor: '#B6FF3C0D', borderColor: colors.accent + '50', borderWidth: 1, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.md, gap: spacing.sm },
   bonusTitle: { fontFamily: fontFamily.semibold, fontSize: fontSize.base, color: colors.ink },
+  warnBox: { backgroundColor: colors.warning + '12', borderColor: colors.warning + '50', borderWidth: 1, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.md, gap: spacing.sm },
+  warnTitle: { fontFamily: fontFamily.semibold, fontSize: fontSize.base, color: colors.ink },
+  strong: { color: colors.ink, fontFamily: fontFamily.semibold },
   helpBox: { marginTop: spacing.xl, backgroundColor: colors.bgElev, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing.lg },
   helpTitle: { fontFamily: fontFamily.semibold, fontSize: fontSize.base, color: colors.ink },
   helpBody: { fontFamily: fontFamily.body, fontSize: fontSize.sm, marginTop: spacing.sm },

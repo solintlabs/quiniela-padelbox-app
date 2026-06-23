@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, type Href } from 'expo-router';
 import { MatchCard } from '@/components/MatchCard';
 import { InlinePredictionRow } from '@/components/InlinePredictionRow';
 import { api, type ApiMatch, type ApiRules, type ApiUser } from '@/lib/api';
@@ -443,6 +443,15 @@ export default function PartidosScreen() {
             </View>
           )}
 
+          {/* Acceso al cuadro de eliminatorias (solo lectura) */}
+          {tab === 'mundial' && (
+            <Link href={'/bracket' as Href} asChild>
+              <Pressable style={styles.bracketBtn}>
+                <Text style={styles.bracketBtnText}>🏟️  Ver cuadro de eliminatorias →</Text>
+              </Pressable>
+            </Link>
+          )}
+
           {/* Ocultar partidos finalizados */}
           {finishedCount > 0 && (
             <Pressable
@@ -632,6 +641,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     marginBottom: spacing.md,
   },
+  bracketBtn: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  bracketBtnText: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.ink },
   hideFinishedText: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.muted },
   hideFinishedTextActive: { color: colors.accent },
   viewModes: {
