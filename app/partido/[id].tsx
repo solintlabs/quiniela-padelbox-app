@@ -18,6 +18,28 @@ import { formatDateTime, STAGE_LABEL, timeLeft } from '@/lib/format';
 const MIN = 0;
 const MAX = 20;
 
+/** Ordena las predicciones: por puntos (desc) o por marcador (agrupa iguales,
+ *  el marcador más elegido primero). */
+function sortPredictions(list: AllPred[], mode: 'puntos' | 'marcador'): AllPred[] {
+  if (mode === 'puntos') {
+    return [...list].sort((a, b) => (b.points ?? -1) - (a.points ?? -1));
+  }
+  const count = new Map<string, number>();
+  for (const p of list) {
+    const k = `${p.homeScore}-${p.awayScore}`;
+    count.set(k, (count.get(k) ?? 0) + 1);
+  }
+  return [...list].sort((a, b) => {
+    const ka = `${a.homeScore}-${a.awayScore}`;
+    const kb = `${b.homeScore}-${b.awayScore}`;
+    const ca = count.get(ka) ?? 0;
+    const cb = count.get(kb) ?? 0;
+    if (cb !== ca) return cb - ca; // grupo más popular primero
+    if (a.homeScore !== b.homeScore) return a.homeScore - b.homeScore;
+    return a.awayScore - b.awayScore;
+  });
+}
+
 type AllPred = {
   id: string;
   homeScore: number;
@@ -39,6 +61,7 @@ export default function MatchDetail() {
   const [saved, setSaved] = useState(false);
   const [hasPaid, setHasPaid] = useState(true);
   const [allPredictions, setAllPredictions] = useState<AllPred[] | null>(null);
+  const [predSort, setPredSort] = useState<'puntos' | 'marcador'>('puntos');
 
   const load = useCallback(async () => {
     try {
@@ -155,8 +178,23 @@ export default function MatchDetail() {
             </Text>
           </View>
         ) : (
+          <View style={{ gap: spacing.sm }}>
+            <View style={styles.sortToggle}>
+              <Pressable
+                onPress={() => setPredSort('puntos')}
+                style={[styles.sortBtn, predSort === 'puntos' && styles.sortBtnActive]}
+              >
+                <Text style={[styles.sortBtnText, predSort === 'puntos' && styles.sortBtnTextActive]}>Por puntos</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setPredSort('marcador')}
+                style={[styles.sortBtn, predSort === 'marcador' && styles.sortBtnActive]}
+              >
+                <Text style={[styles.sortBtnText, predSort === 'marcador' && styles.sortBtnTextActive]}>Por marcador</Text>
+              </Pressable>
+            </View>
           <View style={styles.allList}>
-            {allPredictions.map((p, i) => {
+            {sortPredictions(allPredictions, predSort).map((p, i) => {
               const label =
                 p.points === 3 ? '+3 exacto' : p.points === 1 ? '+1 ganador' : p.points === 0 ? '0' : '—';
               const labelColor =
@@ -179,6 +217,7 @@ export default function MatchDetail() {
                 </View>
               );
             })}
+          </View>
           </View>
         )}
       </View>
@@ -302,6 +341,11 @@ const styles = StyleSheet.create({
   error: { color: colors.danger, fontFamily: fontFamily.body, fontSize: fontSize.sm, textAlign: 'center' },
   sectionTitle: { fontFamily: fontFamily.display, fontSize: fontSize.lg, color: colors.ink, marginBottom: spacing.sm },
   allList: { backgroundColor: colors.bgElev, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, overflow: 'hidden' },
+  sortToggle: { flexDirection: 'row', gap: 4, backgroundColor: colors.bgElev, borderRadius: radius.md, padding: 3, alignSelf: 'flex-start' },
+  sortBtn: { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.sm },
+  sortBtnActive: { backgroundColor: colors.accent },
+  sortBtnText: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.muted },
+  sortBtnTextActive: { color: colors.accentFg },
   allRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, gap: spacing.sm },
   allRowBorder: { borderTopColor: colors.border, borderTopWidth: 1 },
   allUser: { flex: 1, fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink },
