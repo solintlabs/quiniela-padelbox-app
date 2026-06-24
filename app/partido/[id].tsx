@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -62,6 +62,7 @@ export default function MatchDetail() {
   const [hasPaid, setHasPaid] = useState(true);
   const [allPredictions, setAllPredictions] = useState<AllPred[] | null>(null);
   const [predSort, setPredSort] = useState<'puntos' | 'marcador'>('puntos');
+  const sortDefaulted = useRef(false);
 
   const load = useCallback(async () => {
     try {
@@ -83,6 +84,13 @@ export default function MatchDetail() {
         try {
           const all = await api.matchPredictions(id!);
           setAllPredictions(all.predictions);
+          // Default del orden (solo la 1a vez): si aún no hay puntos
+          // (partido no terminado), arrancar POR MARCADOR; si ya hay, por puntos.
+          if (!sortDefaulted.current) {
+            sortDefaulted.current = true;
+            const anyPoints = all.predictions.some((p) => p.points !== null);
+            setPredSort(anyPoints ? 'puntos' : 'marcador');
+          }
         } catch {
           // 403 esperable si justo se cierra; ignorar
         }
