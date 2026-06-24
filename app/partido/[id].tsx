@@ -24,17 +24,9 @@ function sortPredictions(list: AllPred[], mode: 'puntos' | 'marcador'): AllPred[
   if (mode === 'puntos') {
     return [...list].sort((a, b) => (b.points ?? -1) - (a.points ?? -1));
   }
-  const count = new Map<string, number>();
-  for (const p of list) {
-    const k = `${p.homeScore}-${p.awayScore}`;
-    count.set(k, (count.get(k) ?? 0) + 1);
-  }
+  // Orden ascendente por marcador: 0-0, 0-1, 0-2... 1-0, 1-1... (los mismos
+  // marcadores quedan juntos).
   return [...list].sort((a, b) => {
-    const ka = `${a.homeScore}-${a.awayScore}`;
-    const kb = `${b.homeScore}-${b.awayScore}`;
-    const ca = count.get(ka) ?? 0;
-    const cb = count.get(kb) ?? 0;
-    if (cb !== ca) return cb - ca; // grupo más popular primero
     if (a.homeScore !== b.homeScore) return a.homeScore - b.homeScore;
     return a.awayScore - b.awayScore;
   });
