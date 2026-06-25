@@ -218,6 +218,12 @@ export default function PartidosScreen() {
     return new Date(m.kickoff).getTime() - 15 * 60_000 > Date.now();
   }
 
+  // ¿Es un partido que de verdad se MUESTRA y se puede pronosticar? Excluye las
+  // eliminatorias "por definir" (placeholders). CLAVE: 'Guardar todo' jamás debe
+  // guardar partidos que ni se ven (antes creaba 0-0 para los 28 KO sin equipos).
+  const isPredictable = (m: ApiMatch): boolean =>
+    m.group === 'LIGA' || isMundialMatch(m);
+
   // ¿Tiene pronóstico guardado? (del server o guardado en este cliente)
   function isSavedMatch(m: ApiMatch): boolean {
     return !!m.predictions?.[0] || savedNew.has(m.id);
@@ -228,7 +234,7 @@ export default function PartidosScreen() {
     // partidos sin pronóstico guardado aunque no se hayan tocado (su 0-0
     // visible cuenta como pronóstico). Los bloqueados no se envían.
     const dirtyIds = matches
-      .filter((m) => isEditableMatch(m) && (isDirty(m.id) || !isSavedMatch(m)) && values[m.id])
+      .filter((m) => isPredictable(m) && isEditableMatch(m) && (isDirty(m.id) || !isSavedMatch(m)) && values[m.id])
       .map((m) => m.id);
     if (dirtyIds.length === 0) return;
     // Snapshot AHORA: si el user toca un stepper mientras el batch está en
@@ -274,7 +280,7 @@ export default function PartidosScreen() {
     let dirty = 0;
     let toSave = 0;
     for (const m of matches) {
-      if (!isEditableMatch(m)) continue;
+      if (!isPredictable(m) || !isEditableMatch(m)) continue;
       const d = isDirty(m.id);
       if (d) dirty += 1;
       if (d || !isSavedMatch(m)) toSave += 1;
