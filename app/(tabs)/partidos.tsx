@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Link, type Href } from 'expo-router';
 import { MatchCard } from '@/components/MatchCard';
@@ -376,6 +376,23 @@ export default function PartidosScreen() {
 
   const isKO = (m: ApiMatch) => m.stage !== 'GROUP';
   const hasKnockout = useMemo(() => filtered.some(isKO), [filtered]);
+  // ¿Queda algún partido de GRUPOS abierto? Si no, la fase de grupos terminó.
+  const hasOpenGroupMatch = useMemo(
+    () => matches.some((m) => m.stage === 'GROUP' && isEditableMatch(m)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [matches],
+  );
+  // Cuando TERMINE la fase de grupos (no quedan grupos abiertos) y haya
+  // eliminatorias, arranca el filtro en "Eliminatorias" (una sola vez; si el
+  // usuario lo cambia luego, se respeta).
+  const phaseInit = useRef(false);
+  useEffect(() => {
+    if (phaseInit.current) return;
+    if (hasKnockout && !hasOpenGroupMatch) {
+      phaseInit.current = true;
+      setPhase('ko');
+    }
+  }, [hasKnockout, hasOpenGroupMatch]);
 
   // 1) Filtra por fase (Grupos / Eliminatorias / Todos).
   const phaseSections = useMemo(() => {
