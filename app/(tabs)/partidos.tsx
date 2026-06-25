@@ -299,6 +299,7 @@ export default function PartidosScreen() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('grupo');
   const [hideFinished, setHideFinished] = useState(false);
+  const [phase, setPhase] = useState<'todos' | 'grupos' | 'ko'>('todos');
 
   type SectionWithKind = Section & { kind: 'inline' | 'card' };
   const sections: SectionWithKind[] = useMemo(() => {
@@ -373,18 +374,28 @@ export default function PartidosScreen() {
     ].filter((s) => s.data.length > 0);
   }, [filtered, tab, viewMode]);
 
-  const finishedCount = useMemo(
-    () => filtered.filter((m) => m.status === 'FINISHED').length,
-    [filtered],
-  );
-  // Secciones visibles: si se ocultan finalizados, se filtran de cada sección
-  // y las que quedan vacías desaparecen.
-  const visibleSections = useMemo(() => {
-    if (!hideFinished) return sections;
+  const isKO = (m: ApiMatch) => m.stage !== 'GROUP';
+  const hasKnockout = useMemo(() => filtered.some(isKO), [filtered]);
+
+  // 1) Filtra por fase (Grupos / Eliminatorias / Todos).
+  const phaseSections = useMemo(() => {
+    if (phase === 'todos') return sections;
     return sections
+      .map((s) => ({ ...s, data: s.data.filter((m) => (phase === 'ko' ? isKO(m) : !isKO(m))) }))
+      .filter((s) => s.data.length > 0);
+  }, [sections, phase]);
+
+  const finishedCount = useMemo(
+    () => phaseSections.reduce((acc, s) => acc + s.data.filter((m) => m.status === 'FINISHED').length, 0),
+    [phaseSections],
+  );
+  // 2) Oculta finalizados (sobre lo ya filtrado por fase).
+  const visibleSections = useMemo(() => {
+    if (!hideFinished) return phaseSections;
+    return phaseSections
       .map((s) => ({ ...s, data: s.data.filter((m) => m.status !== 'FINISHED') }))
       .filter((s) => s.data.length > 0);
-  }, [sections, hideFinished]);
+  }, [phaseSections, hideFinished]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -437,6 +448,27 @@ export default function PartidosScreen() {
                 >
                   <Text style={[styles.viewModeText, viewMode === vm.key && styles.viewModeTextActive]}>
                     {vm.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+
+          {/* Filtro de fase — solo si ya hay partidos de eliminatoria */}
+          {tab === 'mundial' && hasKnockout && (
+            <View style={styles.viewModes}>
+              {([
+                { k: 'todos', label: 'Todos' },
+                { k: 'grupos', label: 'Grupos' },
+                { k: 'ko', label: '🏆 Elimin.' },
+              ] as const).map((p) => (
+                <Pressable
+                  key={p.k}
+                  onPress={() => setPhase(p.k)}
+                  style={[styles.viewModeBtn, phase === p.k && styles.viewModeBtnActive]}
+                >
+                  <Text style={[styles.viewModeText, phase === p.k && styles.viewModeTextActive]}>
+                    {p.label}
                   </Text>
                 </Pressable>
               ))}
