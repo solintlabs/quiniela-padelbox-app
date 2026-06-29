@@ -9,6 +9,36 @@ const KO_STAGES = ['R32', 'R16', 'QF', 'SF', 'THIRD', 'FINAL'] as const;
 const isPlaceholder = (s: string) =>
   /group\s|round of|third place|\bwinner\b|\brunner\b|\bwin\b|\bplace\b|\b\d(st|nd|rd|th)\b/i.test(s);
 
+// Orden de avance (sin el 3er puesto: ahí van los perdedores de semis).
+const ADVANCE_ORDER = ['R32', 'R16', 'QF', 'SF', 'FINAL'];
+function nextStage(stage: string): string | null {
+  const i = ADVANCE_ORDER.indexOf(stage);
+  return i >= 0 && i < ADVANCE_ORDER.length - 1 ? ADVANCE_ORDER[i + 1] : null;
+}
+
+/**
+ * Quién avanza de un cruce terminado: 'home' | 'away' | null.
+ * 1) Por marcador FINAL (con prórroga). 2) Si quedó empate (penales), se mira
+ * qué equipo aparece en la siguiente ronda (lo rellena ESPN con el clasificado).
+ */
+function advancingSide(m: ApiMatch, all: ApiMatch[]): 'home' | 'away' | null {
+  if (!(m.status === 'FINISHED' && m.homeScore !== null && m.awayScore !== null)) return null;
+  const fh = m.finalHomeScore ?? m.homeScore;
+  const fa = m.finalAwayScore ?? m.awayScore;
+  if (fh !== null && fa !== null) {
+    if (fh > fa) return 'home';
+    if (fa > fh) return 'away';
+  }
+  const next = nextStage(m.stage);
+  if (next) {
+    const inNext = (team: string) =>
+      all.some((x) => x.stage === next && (x.homeTeam === team || x.awayTeam === team));
+    if (!isPlaceholder(m.homeTeam) && inNext(m.homeTeam)) return 'home';
+    if (!isPlaceholder(m.awayTeam) && inNext(m.awayTeam)) return 'away';
+  }
+  return null;
+}
+
 /**
  * Cuadro de eliminatorias (solo lectura) en la app. Muestra todas las rondas
  * llenándose: "Por definir" mientras no se sepan los cruces, equipos reales +
@@ -83,7 +113,7 @@ export default function BracketScreen() {
               {r.label} <Text style={styles.roundCount}>({r.items.length})</Text>
             </Text>
             {r.items.map((m) => (
-              <BracketMatch key={m.id} match={m} />
+              <BracketMatch key={m.id} match={m} advancing={advancingSide(m, matches)} />
             ))}
           </View>
         ))
@@ -92,33 +122,53 @@ export default function BracketScreen() {
   );
 }
 
-function TeamSide({ team, flag, align }: { team: string; flag: string | null; align: 'left' | 'right' }) {
+function TeamSide({
+  team,
+  flag,
+  align,
+  result,
+}: {
+  team: string;
+  flag: string | null;
+  align: 'left' | 'right';
+  result: 'win' | 'lose' | null;
+}) {
   const real = !isPlaceholder(team);
   const name = real ? team : 'Por definir';
+  const check = <Text style={styles.check}>✓</Text>;
   return (
-    <View
-      style={[
-        styles.teamSide,
-        align === 'right' && { justifyContent: 'flex-end' },
-      ]}
-    >
-      {align === 'left' && real && flag && <Image source={{ uri: flag }} style={styles.flag} />}
+    <View style={[styles.teamSide, align === 'right' && { justifyContent: 'flex-end' }]}>
+      {align === 'left' && result === 'win' && check}
+      {align === 'left' && real && flag && (
+        <Image source={{ uri: flag }} style={[styles.flag, result === 'lose' && styles.dim]} />
+      )}
       <Text
-        style={[styles.teamName, !real && styles.teamNamePlaceholder, { textAlign: align }]}
+        style={[
+          styles.teamName,
+          !real && styles.teamNamePlaceholder,
+          result === 'win' && styles.teamWin,
+          result === 'lose' && styles.teamLose,
+          { textAlign: align },
+        ]}
         numberOfLines={1}
       >
         {name}
       </Text>
-      {align === 'right' && real && flag && <Image source={{ uri: flag }} style={styles.flag} />}
+      {align === 'right' && real && flag && (
+        <Image source={{ uri: flag }} style={[styles.flag, result === 'lose' && styles.dim]} />
+      )}
+      {align === 'right' && result === 'win' && check}
     </View>
   );
 }
 
-function BracketMatch({ match: m }: { match: ApiMatch }) {
+function BracketMatch({ match: m, advancing }: { match: ApiMatch; advancing: 'home' | 'away' | null }) {
   const defined = !isPlaceholder(m.homeTeam) && !isPlaceholder(m.awayTeam);
   const finished = m.status === 'FINISHED' && m.homeScore !== null && m.awayScore !== null;
   const live = m.status === 'LIVE';
   const pred = m.predictions?.[0];
+  const homeRes = advancing === 'home' ? 'win' : advancing ? 'lose' : null;
+  const awayRes = advancing === 'away' ? 'win' : advancing ? 'lose' : null;
 
   return (
     <View
@@ -128,7 +178,7 @@ function BracketMatch({ match: m }: { match: ApiMatch }) {
       ]}
     >
       <View style={styles.matchRow}>
-        <TeamSide team={m.homeTeam} flag={m.homeFlag} align="left" />
+        <TeamSide team={m.homeTeam} flag={m.homeFlag} align="left" result={homeRes} />
         {finished && m.finalHomeScore != null &&
         (m.finalHomeScore !== m.homeScore || m.finalAwayScore !== m.awayScore) ? (
           <View style={{ alignItems: 'center' }}>
@@ -140,7 +190,7 @@ function BracketMatch({ match: m }: { match: ApiMatch }) {
             {finished || live ? `${m.homeScore ?? 0}–${m.awayScore ?? 0}` : 'vs'}
           </Text>
         )}
-        <TeamSide team={m.awayTeam} flag={m.awayFlag} align="right" />
+        <TeamSide team={m.awayTeam} flag={m.awayFlag} align="right" result={awayRes} />
       </View>
       <View style={styles.matchMeta}>
         <Text style={styles.metaText}>
@@ -179,6 +229,10 @@ const styles = StyleSheet.create({
   teamSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
   teamName: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink, flexShrink: 1 },
   teamNamePlaceholder: { color: colors.muted, fontStyle: 'italic' },
+  teamWin: { fontFamily: fontFamily.bold, color: colors.ink },
+  teamLose: { color: colors.muted, opacity: 0.55, textDecorationLine: 'line-through' },
+  check: { color: colors.success, fontFamily: fontFamily.bold, fontSize: fontSize.sm },
+  dim: { opacity: 0.5 },
   flag: { width: 20, height: 20, borderRadius: 3 },
   score: { fontFamily: fontFamily.display, fontSize: fontSize.base, color: colors.ink, paddingHorizontal: spacing.sm },
   reg90: { fontFamily: fontFamily.body, fontSize: 9, color: colors.muted },
