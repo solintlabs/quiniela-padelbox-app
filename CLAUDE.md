@@ -19,9 +19,15 @@
 | Bundle / Package | `cloud.solint.quinielapadelbox` |
 
 ### Estado iOS
-- Build enviado a App Store Connect con `--auto-submit`. **App en TestFlight / revisión**.
-- Ficha en App Store Connect: **pendiente de rellenar**.
+- **v1.3.0 (2026-07-29): app multi-tenant** — hub "Mis quinielas" como inicio,
+  crear quiniela nativa, planes con "Subir a Pro" (link externo con kill switch
+  remoto `upgrade.enabled` de `/api/saas/config`), capa social por quiniela.
+  ⚠️ Las v1.1-1.2 se construyeron desde otra máquina y NO están en git: la
+  v1.3.0 las reemplaza por completo. Si aparece un working tree viejo del Mac,
+  gana lo de GitHub.
 - Cuenta de prueba para reviewer: `apple-review@solint.cloud` (OTP por email).
+- Apple cerró el tren 1.0.9 (ITMS-90186/90062): **subir `version` en app.json
+  en cada envío**; el buildNumber lo gestiona EAS (`appVersionSource: remote`).
 
 ### Estado Android
 - Play Console: **cuenta creada y verificada** (aprobación de identidad 2026-05-18).
@@ -92,21 +98,35 @@ eas update --branch production --message "descripción"        # OTA update
 
 ```
 app/
+  index.tsx                → bootstrap: con sesión va a /quinielas (el hub)
+  quinielas.tsx            → HUB "Mis quinielas" (inicio): PADELBOX + tenants SaaS
+  crear-quiniela.tsx       → alta nativa de quiniela (gratis, plan FREE)
+  planes.tsx               → planes desde /api/saas/config + "Subir a Pro" (link web)
+  q/[slug]/index.tsx       → quiniela SaaS: pestañas Inicio/Partidos/Ranking/Reglas
+  q/[slug]/partido/[fixtureId].tsx   → social: tendencia 1X2 + pronósticos al cierre
+  q/[slug]/jugador/[membershipId].tsx → perfil de jugador con stats
   (auth)/login.tsx         → pantalla de login (email + código OTP)
-  (tabs)/
+  (tabs)/                  → PADELBOX (sistema legacy, intacto)
     index.tsx              → dashboard (ranking, pick campeón, reglas)
     partidos.tsx           → lista de partidos con predicciones
-    perfil.tsx             → perfil + hasPaid + inscripción
+    perfil.tsx             → perfil + link "Mis quinielas" de vuelta al hub
 lib/
-  api.ts                   → cliente fetch con JWT automático. Todas las llamadas al backend.
+  api.ts                   → cliente fetch con JWT automático (exporta `request`)
+  saas-api.ts              → cliente de /api/saas/* (mismo JWT); tipos espejo del backend
   auth.ts                  → getToken/setToken/setEmail/clearToken via SecureStore
   push.ts                  → registro/baja de token Expo push
 components/
   MatchCard.tsx            → card de partido
-  PredictionStepper.tsx    → input ± para marcador
+  SaasAdSlot.tsx           → hueco de anuncio en quinielas FREE (fase 1: auto-promo)
 assets/
-  icon.png                 → icono app (fondo negro, logo verde lima)
+  icon.png                 → icono QuinielaBOX (Q + balón). Regenerar: node scripts/gen-icons.mjs
 ```
+
+**Reglas de tienda (NO romper):** el bote/inscripción de las quinielas SaaS
+NUNCA se muestra dentro de la app — solo el link a la página pública
+`/saas/[slug]/inscripcion`. "Subir a Pro" abre el checkout web y respeta el
+kill switch remoto (`upgrade.enabled`); sin IAP. Tras añadir rutas nuevas,
+regenera los typed routes arrancando expo unos segundos antes del typecheck.
 
 ---
 
