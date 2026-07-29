@@ -114,7 +114,13 @@ export interface SaasPlayPayload {
     entryFee: string | null;
     paymentInfo: string | null;
   };
-  me: { role: SaasRole; hasPaid: boolean };
+  me: {
+    role: SaasRole;
+    hasPaid: boolean;
+    /** Presentes desde el backend 2026-07-29; opcionales por si el server es viejo. */
+    membershipId?: string;
+    displayName?: string | null;
+  };
   canPredict: boolean;
   /** Se sigue recibiendo por compatibilidad, pero la app YA NO lo muestra:
    *  el bote se paga fuera, en la página pública de inscripción (regla Apple). */

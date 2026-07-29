@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -24,16 +24,18 @@ import {
   type SaasConfig,
   type SaasFixtureVM,
   type SaasPlayPayload,
+  type SaasPlayerProfile,
 } from '@/lib/saas-api';
 import { SaasAdSlot } from '@/components/SaasAdSlot';
 import { Button } from '@/components/Button';
 
-type TabKey = 'inicio' | 'partidos' | 'ranking' | 'reglas';
+type TabKey = 'inicio' | 'partidos' | 'ranking' | 'reglas' | 'perfil';
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'inicio', label: 'Inicio' },
   { key: 'partidos', label: 'Partidos' },
   { key: 'ranking', label: 'Ranking' },
   { key: 'reglas', label: 'Reglas' },
+  { key: 'perfil', label: 'Mi perfil' },
 ];
 
 /**
@@ -141,7 +143,7 @@ export default function TenantScreen() {
         }
       >
         {tab === 'inicio' && (
-          <InicioTab data={data} accent={accent} slug={slug!} onChanged={load} />
+          <InicioTab data={data} accent={accent} slug={slug!} config={config} onChanged={load} />
         )}
         {tab === 'partidos' && (
           <PartidosTab data={data} accent={accent} slug={slug!} onSaved={load} />
@@ -156,6 +158,7 @@ export default function TenantScreen() {
             isOrganizer={isOrganizer}
           />
         )}
+        {tab === 'perfil' && <PerfilTab data={data} accent={accent} slug={slug!} />}
       </ScrollView>
     </View>
   );
@@ -167,22 +170,52 @@ function InicioTab({
   data,
   accent,
   slug,
+  config,
   onChanged,
 }: {
   data: SaasPlayPayload;
   accent: string;
   slug: string;
+  config: SaasConfig;
   onChanged: () => void;
 }) {
   const ranking = data.ranking ?? [];
   const podium = ranking.slice(0, 3);
   const me = ranking.find((r) => r.isMe);
   const next = (data.fixtures ?? []).filter((f) => !f.closed).slice(0, 3);
+  const pro = config.plans.find((p) => p.id === 'PRO');
 
   return (
     <View>
       {!data.competition && (
         <EmptyCompetition slug={slug} isOrganizer={data.me.role !== 'PLAYER'} tenantName={data.tenant.name} />
+      )}
+
+      {/* Upsell a Pro, solo al organizador de una quiniela FREE: el beneficio
+          concreto por delante, no la marca. Obedece el kill switch remoto. */}
+      {data.me.role === 'OWNER' && data.tenant.plan === 'FREE' && config.upgrade.enabled && (
+        <Pressable
+          onPress={() => Linking.openURL(fillSlug(config.upgrade.urlTemplate, slug))}
+          style={[styles.card, { borderColor: accent }]}
+        >
+          <Text style={[styles.cardLabel, { color: accent }]}>⭐ Pásate a Pro</Text>
+          <Text style={styles.ruleLine}>
+            Sin anuncios para tus jugadores · hasta {pro?.limits.maxPlayers ?? 500} jugadores ·
+            tu logo y tu marca · {pro?.limits.maxCompetitions ?? 5} competiciones a la vez
+          </Text>
+          <Text
+            style={{
+              color: accent,
+              fontFamily: fontFamily.semibold,
+              fontSize: fontSize.sm,
+              marginTop: spacing.xs,
+            }}
+          >
+            {pro?.season
+              ? `$${pro.season.priceUsd} ${pro.season.label} (pago único) →`
+              : 'Ver planes →'}
+          </Text>
+        </Pressable>
       )}
 
       {podium.length > 0 && (
@@ -397,7 +430,10 @@ function PartidosTab({
     <View>
       {fixtures.map((f) => (
         <FixtureRow
-          key={f.id}
+          // El marcador guardado forma parte de la key: si cambia en el
+          // servidor, la fila se remonta con la verdad nueva sin pisar lo
+          // que el usuario esté editando en las demás.
+          key={`${f.id}:${f.myHome ?? 'x'}-${f.myAway ?? 'x'}`}
           fixture={f}
           accent={accent}
           slug={slug}
@@ -422,10 +458,18 @@ function FixtureRow({
   canPredict: boolean;
   onSaved: () => void;
 }) {
-  const [home, setHome] = useState<number | null>(f.myHome);
-  const [away, setAway] = useState<number | null>(f.myAway);
+  // Mismo patrón que PADELBOX: feedback de guardado inmediato en el cliente
+  // ("✓ Guardado" / "● Sin guardar" / "Sin pronóstico"), aunque el payload
+  // del servidor aún no haya refrescado.
+  const [saved, setSaved] = useState(
+    f.myHome !== null && f.myAway !== null ? { h: f.myHome, a: f.myAway } : null,
+  );
+  const [home, setHome] = useState(f.myHome ?? 0);
+  const [away, setAway] = useState(f.myAway ?? 0);
   const [saving, setSaving] = useState(false);
-  const dirty = home !== f.myHome || away !== f.myAway;
+  const [error, setError] = useState<string | null>(null);
+  const dirty = saved !== null && (home !== saved.h || away !== saved.a);
+  const editable = !f.closed && canPredict;
 
   const when = useMemo(() => {
     const d = new Date(f.kickoff);
@@ -439,13 +483,14 @@ function FixtureRow({
   }, [f.kickoff]);
 
   async function save() {
-    if (home === null || away === null) return;
     setSaving(true);
+    setError(null);
     try {
       await saasApi.submitEntry(slug, f.id, home, away);
+      setSaved({ h: home, a: away });
       onSaved();
     } catch (e) {
-      Alert.alert('No se pudo guardar', e instanceof Error ? e.message : 'Inténtalo de nuevo');
+      setError(e instanceof Error ? e.message : 'No se pudo guardar');
     } finally {
       setSaving(false);
     }
@@ -456,7 +501,15 @@ function FixtureRow({
       onPress={() =>
         router.push({ pathname: '/q/[slug]/partido/[fixtureId]', params: { slug, fixtureId: f.id } })
       }
-      style={styles.card}
+      style={[
+        styles.card,
+        editable &&
+          dirty && { borderColor: colors.warning + 'AA', backgroundColor: colors.warning + '12' },
+        editable &&
+          !dirty &&
+          saved !== null && { borderColor: accent + '70', backgroundColor: accent + '12' },
+        editable && !dirty && saved === null && { borderColor: accent + '40' },
+      ]}
     >
       <View style={styles.fixtureTop}>
         <Text style={styles.cardMeta}>
@@ -477,25 +530,53 @@ function FixtureRow({
         <TeamCell name={f.away} logo={f.awayLogo} right />
       </View>
 
-      {!f.closed && canPredict ? (
-        <View style={styles.stepperRow}>
-          <Stepper value={home} onChange={setHome} accent={accent} />
-          <Text style={styles.cardMeta}>Mi pronóstico</Text>
-          <Stepper value={away} onChange={setAway} accent={accent} />
-        </View>
+      {editable ? (
+        <>
+          <View style={styles.stepperRow}>
+            <Stepper value={home} onChange={setHome} accent={accent} disabled={saving} />
+            <Text style={styles.cardMeta}>Mi pronóstico</Text>
+            <Stepper value={away} onChange={setAway} accent={accent} disabled={saving} />
+          </View>
+          <View style={styles.saveRow}>
+            <View style={styles.statusRow}>
+              {saving && <ActivityIndicator size="small" color={colors.muted} />}
+              {!saving && dirty && <Text style={styles.statusDirty}>● Sin guardar</Text>}
+              {!saving && !dirty && saved !== null && (
+                <Text style={styles.statusSaved}>✓ Guardado</Text>
+              )}
+              {!saving && saved === null && <Text style={styles.statusMuted}>Sin pronóstico</Text>}
+              {!!error && (
+                <Text style={styles.statusError} numberOfLines={1}>
+                  {error}
+                </Text>
+              )}
+            </View>
+            {(dirty || saved === null) && (
+              <Pressable
+                onPress={save}
+                disabled={saving}
+                style={[styles.saveBtn, { backgroundColor: accent }, saving && { opacity: 0.5 }]}
+              >
+                <Text style={styles.saveBtnText}>{saving ? '…' : 'Guardar'}</Text>
+              </Pressable>
+            )}
+          </View>
+        </>
       ) : null}
 
-      {!f.closed && canPredict && dirty && home !== null && away !== null ? (
-        <View style={{ marginTop: spacing.sm }}>
-          <Button title={saving ? 'Guardando…' : 'Guardar'} onPress={save} loading={saving} />
-        </View>
-      ) : null}
-
-      {f.closed && f.myHome !== null && (
-        <Text style={[styles.cardMeta, { marginTop: spacing.xs }]}>
-          Tu pronóstico: {f.myHome}–{f.myAway}
-        </Text>
-      )}
+      {f.closed &&
+        (f.myHome !== null ? (
+          <Text style={[styles.cardMeta, { marginTop: spacing.xs }]}>
+            Tu pronóstico:{' '}
+            <Text style={{ color: colors.ink, fontFamily: fontFamily.semibold }}>
+              {f.myHome}–{f.myAway}
+            </Text>
+          </Text>
+        ) : (
+          <Text style={[styles.cardMeta, { marginTop: spacing.xs }]}>
+            No pronosticaste este partido
+          </Text>
+        ))}
     </Pressable>
   );
 }
@@ -515,26 +596,28 @@ function Stepper({
   value,
   onChange,
   accent,
+  disabled,
 }: {
-  value: number | null;
+  value: number;
   onChange: (n: number) => void;
   accent: string;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.stepper}>
       <Pressable
-        onPress={() => onChange(Math.max(0, (value ?? 0) - 1))}
-        style={styles.stepBtn}
+        onPress={() => onChange(value - 1)}
+        disabled={disabled || value <= 0}
+        style={[styles.stepBtn, (disabled || value <= 0) && { opacity: 0.3 }]}
         hitSlop={8}
       >
         <Text style={styles.stepBtnText}>−</Text>
       </Pressable>
-      <Text style={[styles.stepValue, value !== null && { color: accent }]}>
-        {value ?? '·'}
-      </Text>
+      <Text style={[styles.stepValue, { color: accent }]}>{value}</Text>
       <Pressable
-        onPress={() => onChange(Math.min(20, (value ?? -1) + 1))}
-        style={styles.stepBtn}
+        onPress={() => onChange(value + 1)}
+        disabled={disabled || value >= 20}
+        style={[styles.stepBtn, (disabled || value >= 20) && { opacity: 0.3 }]}
         hitSlop={8}
       >
         <Text style={styles.stepBtnText}>＋</Text>
@@ -662,8 +745,6 @@ function ReglasTab({
         </View>
       )}
 
-      <RenameCard slug={slug} accent={accent} />
-
       {isOrganizer && (
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Organizador</Text>
@@ -704,6 +785,110 @@ function ReglasTab({
               })
             }
           />
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ---------------- Mi perfil ----------------
+
+function PerfilTab({
+  data,
+  accent,
+  slug,
+}: {
+  data: SaasPlayPayload;
+  accent: string;
+  slug: string;
+}) {
+  const membershipId = data.me.membershipId;
+  const [profile, setProfile] = useState<SaasPlayerProfile | null>(null);
+
+  useEffect(() => {
+    if (!membershipId) return;
+    let alive = true;
+    saasApi
+      .player(slug, membershipId)
+      .then((p) => {
+        if (alive) setProfile(p);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [slug, membershipId]);
+
+  return (
+    <View>
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Tú en esta quiniela</Text>
+        <Text style={[styles.champName, { color: accent }]}>
+          {profile?.player.name ?? data.me.displayName ?? 'Jugador'}
+        </Text>
+        <Text style={styles.cardMeta}>
+          {data.me.role === 'OWNER'
+            ? 'Organizador'
+            : data.me.role === 'ADMIN'
+              ? 'Admin'
+              : data.me.hasPaid
+                ? 'Inscripción confirmada ✓'
+                : 'Inscripción pendiente de confirmar'}
+        </Text>
+      </View>
+
+      {profile && (
+        <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
+          <View style={[styles.podiumBox, { borderColor: accent }]}>
+            <Text style={[styles.podiumPos, { color: accent }]}>{profile.stats.points}</Text>
+            <Text style={styles.cardMeta}>Puntos</Text>
+          </View>
+          <View style={styles.podiumBox}>
+            <Text style={styles.podiumPos}>{profile.stats.exact}</Text>
+            <Text style={styles.cardMeta}>Exactos</Text>
+          </View>
+          <View style={styles.podiumBox}>
+            <Text style={styles.podiumPos}>{profile.stats.total}</Text>
+            <Text style={styles.cardMeta}>Pronósticos</Text>
+          </View>
+        </View>
+      )}
+
+      <RenameCard slug={slug} accent={accent} />
+
+      {profile && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Mis pronósticos</Text>
+          {profile.predictions.map((p) => (
+            <View key={p.id} style={styles.predRow}>
+              <Text style={styles.predMatch} numberOfLines={1}>
+                {p.home} — {p.away}
+              </Text>
+              <Text style={styles.predScore}>
+                {p.homeScore}–{p.awayScore}
+              </Text>
+              <Text
+                style={[
+                  styles.predPts,
+                  p.points !== null && p.points > 0 && { color: accent },
+                ]}
+              >
+                {p.points !== null ? `+${p.points}` : '·'}
+              </Text>
+            </View>
+          ))}
+          {profile.predictions.length === 0 && (
+            <Text style={styles.cardMeta}>Todavía no has pronosticado.</Text>
+          )}
+        </View>
+      )}
+
+      {!membershipId && !profile && (
+        <View style={styles.card}>
+          <Text style={styles.cardMeta}>
+            Actualiza la app o desliza para refrescar: el perfil necesita la versión nueva del
+            servidor.
+          </Text>
         </View>
       )}
     </View>
@@ -893,5 +1078,44 @@ const styles = StyleSheet.create({
     color: colors.ink,
     paddingVertical: 2,
     lineHeight: 20,
+  },
+  saveRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  predRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  predMatch: { flex: 1, fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.ink },
+  predScore: { fontFamily: fontFamily.display, fontSize: fontSize.sm, color: colors.ink },
+  predPts: {
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize.sm,
+    color: colors.muted,
+    minWidth: 30,
+    textAlign: 'right',
+  },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 },
+  statusSaved: { fontFamily: fontFamily.semibold, fontSize: 11, color: colors.success },
+  statusDirty: { fontFamily: fontFamily.semibold, fontSize: 11, color: colors.warning },
+  statusMuted: { fontFamily: fontFamily.body, fontSize: 11, color: colors.muted },
+  statusError: { fontFamily: fontFamily.body, fontSize: 11, color: colors.danger, flexShrink: 1 },
+  saveBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+  },
+  saveBtnText: {
+    fontFamily: fontFamily.display,
+    fontSize: 11,
+    color: colors.accentFg,
+    letterSpacing: 0.3,
   },
 });

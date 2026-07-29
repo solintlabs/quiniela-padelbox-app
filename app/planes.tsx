@@ -58,7 +58,11 @@ export default function PlanesScreen() {
       {config.plans.map((p) => {
         const isPro = p.id === 'PRO';
         return (
-          <View key={p.id} style={[styles.card, isPro && { borderColor: colors.accent }]}>
+          <View
+            key={p.id}
+            style={[styles.card, isPro && { borderColor: colors.accent, borderWidth: 2 }]}
+          >
+            {isPro && <Text style={styles.proTag}>⭐ RECOMENDADO</Text>}
             <View style={styles.planHead}>
               <Text style={[styles.planName, isPro && { color: colors.accent }]}>{p.name}</Text>
               <Text style={styles.planPrice}>
@@ -66,12 +70,14 @@ export default function PlanesScreen() {
                   ? 'A medida'
                   : p.priceUsd === 0
                     ? 'Gratis'
-                    : `$${p.priceUsd}/${p.period ?? 'mes'}`}
+                    : isPro && p.season
+                      ? `$${p.season.priceUsd}/temporada`
+                      : `$${p.priceUsd}/${p.period ?? 'mes'}`}
               </Text>
             </View>
             {isPro && p.season && (
               <Text style={[styles.meta, { color: colors.accent, marginBottom: spacing.xs }]}>
-                ⭐ ${p.season.priceUsd} {p.season.label} — {p.season.note}
+                {p.season.note} · o ${p.priceUsd}/mes si lo prefieres
               </Text>
             )}
             <Text style={[styles.meta, { marginBottom: spacing.sm }]}>{p.tagline}</Text>
@@ -138,6 +144,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
+    marginBottom: spacing.xs,
+  },
+  proTag: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 10,
+    color: colors.accent,
+    letterSpacing: 1.2,
     marginBottom: spacing.xs,
   },
   planName: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink },

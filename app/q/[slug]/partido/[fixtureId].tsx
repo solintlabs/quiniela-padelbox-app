@@ -75,6 +75,22 @@ export default function SaasFixtureDetail() {
         <TeamSide name={f.away} logo={f.awayLogo} />
       </View>
 
+      {/* La tendencia puede venir también ANTES del cierre si el organizador
+          activó los porcentajes (solo %, nunca marcadores individuales). */}
+      {data.trend && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Tendencia</Text>
+          <TrendBar label={`Gana ${f.home}`} pct={data.trend.home} />
+          <TrendBar label="Empate" pct={data.trend.draw} />
+          <TrendBar label={`Gana ${f.away}`} pct={data.trend.away} />
+          {!data.revealed && (
+            <Text style={[styles.cardMeta, { marginTop: spacing.xs, fontSize: 11 }]}>
+              Porcentajes en vivo — los marcadores de cada jugador se revelan al cierre.
+            </Text>
+          )}
+        </View>
+      )}
+
       {!data.revealed ? (
         <View style={styles.card}>
           <Text style={styles.cardMeta}>
@@ -83,15 +99,6 @@ export default function SaasFixtureDetail() {
         </View>
       ) : (
         <>
-          {data.trend && (
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>Tendencia</Text>
-              <TrendBar label={`Gana ${f.home}`} pct={data.trend.home} />
-              <TrendBar label="Empate" pct={data.trend.draw} />
-              <TrendBar label={`Gana ${f.away}`} pct={data.trend.away} />
-            </View>
-          )}
-
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Pronósticos ({data.entries.length})</Text>
             {data.entries.map((e) => (
