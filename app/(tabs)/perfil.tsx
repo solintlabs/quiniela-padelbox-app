@@ -182,6 +182,12 @@ export default function PerfilScreen() {
       </View>
 
       <View style={{ gap: spacing.sm }}>
+        <Link href="/quinielas" asChild>
+          <Pressable style={styles.linkRow}>
+            <Text style={styles.linkLabel}>🏆  Mis quinielas</Text>
+            <Text style={styles.linkArrow}>→</Text>
+          </Pressable>
+        </Link>
         <Link href="/reglas" asChild>
           <Pressable style={styles.linkRow}>
             <Text style={styles.linkLabel}>📖  Reglas de la quiniela</Text>

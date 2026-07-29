@@ -10,7 +10,7 @@ export class UnauthenticatedError extends Error {
 }
 
 /** Cliente fetch con token JWT automático. Lanza si la respuesta no es OK. */
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = await getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

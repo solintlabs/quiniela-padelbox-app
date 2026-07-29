@@ -10,7 +10,8 @@ export default function Index() {
     (async () => {
       const token = await getToken();
       if (token) {
-        router.replace('/(tabs)');
+        // La app abre en el hub multi-quiniela; PADELBOX es una entrada más.
+        router.replace('/quinielas');
       } else {
         router.replace('/(auth)/login');
       }

@@ -51,6 +51,12 @@ export default function RootLayout() {
             >
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="quinielas" options={{ headerShown: false }} />
+              <Stack.Screen name="crear-quiniela" options={{ title: 'Crear quiniela' }} />
+              <Stack.Screen name="planes" options={{ title: 'Planes' }} />
+              <Stack.Screen name="q/[slug]/index" options={{ title: 'Quiniela' }} />
+              <Stack.Screen name="q/[slug]/partido/[fixtureId]" options={{ title: 'Partido' }} />
+              <Stack.Screen name="q/[slug]/jugador/[membershipId]" options={{ title: 'Jugador' }} />
               <Stack.Screen name="partido/[id]" options={{ title: 'Partido' }} />
               <Stack.Screen name="inscripcion" options={{ title: 'Inscripción' }} />
               <Stack.Screen name="predecir-grupos" options={{ title: 'Fase de grupos' }} />
