@@ -244,7 +244,7 @@ export default function PerfilScreen() {
       <Pressable onPress={() => Linking.openURL('https://solint.cloud')}>
         <Text style={styles.footer}>
           Desarrollado por{' '}
-          <Text style={{ color: colors.accent, textDecorationLine: 'underline' }}>Solintlabs · S.Baldini</Text>
+          <Text style={{ color: colors.accent, textDecorationLine: 'underline' }}>Solintlabs</Text>
         </Text>
       </Pressable>
     </ScrollView>

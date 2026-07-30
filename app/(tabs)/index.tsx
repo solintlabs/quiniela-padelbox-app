@@ -239,7 +239,7 @@ export default function HomeScreen() {
       <Pressable onPress={() => Linking.openURL('https://solint.cloud')} style={{ marginTop: spacing.xl }}>
         <Text style={styles.footer}>
           Desarrollado por{' '}
-          <Text style={{ color: colors.accent, textDecorationLine: 'underline' }}>Solintlabs · S.Baldini</Text>
+          <Text style={{ color: colors.accent, textDecorationLine: 'underline' }}>Solintlabs</Text>
         </Text>
       </Pressable>
     </ScrollView>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ImageBackground,
   KeyboardAvoidingView,
@@ -12,9 +12,20 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
 import { Button } from '@/components/Button';
-import { requestLoginCode } from '@/lib/api';
+import { loginWithApple, loginWithGoogle, requestLoginCode } from '@/lib/api';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
+
+WebBrowser.maybeCompleteAuthSession();
+
+/** Client ID de Google para iOS (Google Cloud → Credentials → iOS). Si no
+ *  está configurado, el botón de Google no se muestra. */
+const GOOGLE_IOS_CLIENT_ID =
+  (Constants.expoConfig?.extra?.googleIosClientId as string | undefined) ?? undefined;
 
 const STADIUM_BG =
   'https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=1200&q=70';
@@ -29,7 +40,59 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
+    }
+  }, []);
+
+  const [googleRequest, googleResponse, promptGoogle] = Google.useIdTokenAuthRequest({
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type !== 'success') return;
+    const idToken = googleResponse.params?.id_token;
+    if (!idToken) return;
+    setSocialLoading(true);
+    setError(null);
+    loginWithGoogle(idToken)
+      .then(() => router.replace('/quinielas'))
+      .catch((e) => setError(e instanceof Error ? e.message : 'No se pudo entrar con Google'))
+      .finally(() => setSocialLoading(false));
+  }, [googleResponse]);
+
+  async function onApple() {
+    setError(null);
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) throw new Error('Apple no devolvió credenciales.');
+      // El nombre solo llega la primera vez que el usuario autoriza.
+      const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+        .filter(Boolean)
+        .join(' ');
+      setSocialLoading(true);
+      await loginWithApple(credential.identityToken, fullName || undefined);
+      router.replace('/quinielas');
+    } catch (e) {
+      // ERR_REQUEST_CANCELED = el usuario cerró el diálogo: no es un error.
+      const code = (e as { code?: string })?.code;
+      if (code !== 'ERR_REQUEST_CANCELED') {
+        setError(e instanceof Error ? e.message : 'No se pudo entrar con Apple');
+      }
+    } finally {
+      setSocialLoading(false);
+    }
+  }
 
   async function onSubmit() {
     const cleanEmail = email.trim().toLowerCase();
@@ -65,6 +128,36 @@ export default function LoginScreen() {
               La quiniela de tu club, tu peña o tus amigos. Pronostica, compite y sube en la tabla.
             </Text>
           </View>
+
+          {/* Login social: mismo backend, mismo JWT. Apple exige su botón
+              oficial; Google solo aparece si hay client ID configurado. */}
+          {(appleAvailable || (GOOGLE_IOS_CLIENT_ID && googleRequest)) && (
+            <View style={styles.socialBox}>
+              {appleAvailable && (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                  cornerRadius={radius.md}
+                  style={styles.appleBtn}
+                  onPress={socialLoading ? () => {} : onApple}
+                />
+              )}
+              {GOOGLE_IOS_CLIENT_ID && googleRequest && (
+                <Pressable
+                  onPress={() => !socialLoading && promptGoogle()}
+                  style={({ pressed }) => [styles.googleBtn, pressed && { opacity: 0.85 }]}
+                >
+                  <Text style={styles.googleG}>G</Text>
+                  <Text style={styles.googleText}>Continuar con Google</Text>
+                </Pressable>
+              )}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>o con tu email</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            </View>
+          )}
 
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
@@ -137,7 +230,7 @@ export default function LoginScreen() {
             </Text>
             <Pressable onPress={() => Linking.openURL('https://solint.cloud')} style={{ marginTop: spacing.lg }}>
               <Text style={styles.devCredit}>
-                Desarrollado por <Text style={styles.devLink}>Solintlabs · S.Baldini</Text>
+                Desarrollado por <Text style={styles.devLink}>Solintlabs</Text>
               </Text>
             </Pressable>
           </View>
@@ -164,6 +257,22 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     lineHeight: 20,
   },
+  socialBox: { gap: spacing.md, marginBottom: spacing.md },
+  appleBtn: { width: '100%', height: 48 },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: '#FFFFFF',
+  },
+  googleG: { fontFamily: fontFamily.display, fontSize: 18, color: '#4285F4' },
+  googleText: { fontFamily: fontFamily.semibold, fontSize: fontSize.base, color: '#1F1F1F' },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.xs },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerText: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted },
   form: {
     gap: spacing.md,
     backgroundColor: 'rgba(10,10,10,0.92)',

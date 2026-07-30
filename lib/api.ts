@@ -77,6 +77,29 @@ export async function verifyLoginCode(
   return data;
 }
 
+/** Sign in with Apple: manda el identityToken nativo; el backend lo verifica
+ *  contra las JWKS de Apple y devuelve el mismo JWT que el flujo OTP. */
+export async function loginWithApple(identityToken: string, name?: string): Promise<VerifyResponse> {
+  const data = await request<VerifyResponse>('/api/auth/social/apple', {
+    method: 'POST',
+    body: JSON.stringify({ identityToken, name: name || undefined }),
+  });
+  await setToken(data.token);
+  await setEmail(data.user.email);
+  return data;
+}
+
+/** Google Sign-In: manda el id_token de Google. */
+export async function loginWithGoogle(idToken: string): Promise<VerifyResponse> {
+  const data = await request<VerifyResponse>('/api/auth/social/google', {
+    method: 'POST',
+    body: JSON.stringify({ idToken }),
+  });
+  await setToken(data.token);
+  await setEmail(data.user.email);
+  return data;
+}
+
 // ---- Dominio ----
 
 export interface ApiMatch {

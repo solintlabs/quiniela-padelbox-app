@@ -2,7 +2,7 @@
   "expo": {
     "name": "QuinielaBOX",
     "slug": "quiniela-padelbox-app",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "quinielapadelbox",
@@ -20,6 +20,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "cloud.solint.quinielapadelbox",
       "buildNumber": "23",
+      "usesAppleSignIn": true,
       "icon": "./assets/icon.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -62,7 +63,8 @@
           "icon": "./assets/icon.png",
           "color": "#B6FF3C"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
