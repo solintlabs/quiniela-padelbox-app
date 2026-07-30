@@ -2,10 +2,13 @@
   "expo": {
     "name": "QuinielaBOX",
     "slug": "quiniela-padelbox-app",
-    "version": "1.3.1",
+    "version": "1.3.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "quinielapadelbox",
+    "scheme": [
+      "quinielapadelbox",
+      "com.googleusercontent.apps.4316983371-8hc1ck2hl08k3hgpoesk20663ej6oal3"
+    ],
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A0A0A",
     "primaryColor": "#B6FF3C",
@@ -71,6 +74,7 @@
     },
     "extra": {
       "apiUrl": "https://quiniela.solint.cloud",
+      "googleIosClientId": "4316983371-8hc1ck2hl08k3hgpoesk20663ej6oal3.apps.googleusercontent.com",
       "router": {},
       "eas": {
         "projectId": "eeb72121-4a6d-4398-a009-c07c9dd43dd9"
