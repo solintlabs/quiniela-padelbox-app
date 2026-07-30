@@ -19,15 +19,23 @@
 | Bundle / Package | `cloud.solint.quinielapadelbox` |
 
 ### Estado iOS
-- **v1.3.0 (2026-07-29): app multi-tenant** — hub "Mis quinielas" como inicio,
-  crear quiniela nativa, planes con "Subir a Pro" (link externo con kill switch
-  remoto `upgrade.enabled` de `/api/saas/config`), capa social por quiniela.
+- **v1.3.2 (2026-07-29 noche)**: + **Sign in with Apple y Google Sign-In**
+  (`/api/auth/social/*` del backend emite el mismo JWT que el OTP). Google:
+  client ID iOS en `extra.googleIosClientId` + scheme invertido en app.json;
+  Apple: `ios.usesAppleSignIn`. Créditos solo Solintlabs.
+- **v1.3.0-1.3.1 (2026-07-29): app multi-tenant** — hub "Mis quinielas" como
+  inicio, crear quiniela nativa, planes con "Subir a Pro" (link externo con
+  kill switch remoto `upgrade.enabled` de `/api/saas/config`), Mi perfil,
+  "✓ Guardado / ● Sin guardar" por partido, capa social por quiniela.
   ⚠️ Las v1.1-1.2 se construyeron desde otra máquina y NO están en git: la
-  v1.3.0 las reemplaza por completo. Si aparece un working tree viejo del Mac,
+  v1.3.x las reemplaza por completo. Si aparece un working tree viejo del Mac,
   gana lo de GitHub.
 - Cuenta de prueba para reviewer: `apple-review@solint.cloud` (OTP por email).
 - Apple cerró el tren 1.0.9 (ITMS-90186/90062): **subir `version` en app.json
   en cada envío**; el buildNumber lo gestiona EAS (`appVersionSource: remote`).
+- Cambios JS sin módulos nativos nuevos → `eas update --branch production`
+  (OTA al runtime de la versión actual). Módulo nativo o scheme nuevo →
+  subir `version` + build (si no, la OTA rompería a los builds viejos).
 
 ### Estado Android
 - Play Console: **cuenta creada y verificada** (aprobación de identidad 2026-05-18).
