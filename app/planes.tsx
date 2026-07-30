@@ -70,14 +70,12 @@ export default function PlanesScreen() {
                   ? 'A medida'
                   : p.priceUsd === 0
                     ? 'Gratis'
-                    : isPro && p.season
-                      ? `$${p.season.priceUsd}/temporada`
-                      : `$${p.priceUsd}/${p.period ?? 'mes'}`}
+                    : `$${p.priceUsd}/${p.period ?? 'mes'}`}
               </Text>
             </View>
             {isPro && p.season && (
               <Text style={[styles.meta, { color: colors.accent, marginBottom: spacing.xs }]}>
-                {p.season.note} · o ${p.priceUsd}/mes si lo prefieres
+                ⭐ Mejor precio: ${p.season.priceUsd}/temporada — pago único, cubre el torneo
               </Text>
             )}
             <Text style={[styles.meta, { marginBottom: spacing.sm }]}>{p.tagline}</Text>
