@@ -129,36 +129,6 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          {/* Login social: mismo backend, mismo JWT. Apple exige su botón
-              oficial; Google solo aparece si hay client ID configurado. */}
-          {(appleAvailable || (GOOGLE_IOS_CLIENT_ID && googleRequest)) && (
-            <View style={styles.socialBox}>
-              {appleAvailable && (
-                <AppleAuthentication.AppleAuthenticationButton
-                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
-                  cornerRadius={radius.md}
-                  style={styles.appleBtn}
-                  onPress={socialLoading ? () => {} : onApple}
-                />
-              )}
-              {GOOGLE_IOS_CLIENT_ID && googleRequest && (
-                <Pressable
-                  onPress={() => !socialLoading && promptGoogle()}
-                  style={({ pressed }) => [styles.googleBtn, pressed && { opacity: 0.85 }]}
-                >
-                  <Text style={styles.googleG}>G</Text>
-                  <Text style={styles.googleText}>Continuar con Google</Text>
-                </Pressable>
-              )}
-              <View style={styles.dividerRow}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>o con tu email</Text>
-                <View style={styles.dividerLine} />
-              </View>
-            </View>
-          )}
-
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Nombre</Text>
@@ -210,6 +180,36 @@ export default function LoginScreen() {
             </Text>
           </View>
 
+          {/* Login social DEBAJO del formulario. Apple exige su botón oficial;
+              Google solo aparece si hay client ID configurado. */}
+          {(appleAvailable || (GOOGLE_IOS_CLIENT_ID && googleRequest)) && (
+            <View style={styles.socialBox}>
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>o continúa con</Text>
+                <View style={styles.dividerLine} />
+              </View>
+              {appleAvailable && (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                  cornerRadius={radius.md}
+                  style={styles.appleBtn}
+                  onPress={socialLoading ? () => {} : onApple}
+                />
+              )}
+              {GOOGLE_IOS_CLIENT_ID && googleRequest && (
+                <Pressable
+                  onPress={() => !socialLoading && promptGoogle()}
+                  style={({ pressed }) => [styles.googleBtn, pressed && { opacity: 0.85 }]}
+                >
+                  <Text style={styles.googleG}>G</Text>
+                  <Text style={styles.googleText}>Continuar con Google</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+
           <View style={styles.infoBox}>
             <Text style={styles.infoEyebrow}>¿CÓMO ENTRO?</Text>
             <Text style={styles.infoBody}>
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     lineHeight: 20,
   },
-  socialBox: { gap: spacing.md, marginBottom: spacing.md },
+  socialBox: { gap: spacing.md, marginTop: spacing.lg },
   appleBtn: { width: '100%', height: 48 },
   googleBtn: {
     flexDirection: 'row',

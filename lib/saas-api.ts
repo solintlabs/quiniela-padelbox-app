@@ -131,6 +131,9 @@ export interface SaasPlayPayload {
     status: 'OPEN' | 'LOCKED' | 'FINISHED';
     pointsSummary: string[];
     pointsBonus: number;
+    /** Presentes desde el backend 2026-07-30 (pestaña Admin). */
+    lockOffsetMin?: number;
+    showTrendPreClose?: boolean;
   } | null;
   fixtures?: SaasFixtureVM[];
   ranking?: SaasRankingRow[];
@@ -220,4 +223,40 @@ export const saasApi = {
     request<SaasFixtureEntries>(`/api/saas/${slug}/fixtures/${fixtureId}/entries`),
   player: (slug: string, membershipId: string) =>
     request<SaasPlayerProfile>(`/api/saas/${slug}/players/${membershipId}`),
+
+  // ---- Pestaña Admin (solo OWNER/ADMIN; el backend lo verifica) ----
+  players: (slug: string) => request<{ players: SaasAdminPlayer[] }>(`/api/saas/${slug}/players`),
+  patchPlayer: (slug: string, membershipId: string, patch: { hasPaid?: boolean; role?: 'ADMIN' | 'PLAYER' }) =>
+    request<{ ok: true }>(`/api/saas/${slug}/players`, {
+      method: 'PATCH',
+      body: JSON.stringify({ membershipId, ...patch }),
+    }),
+  syncCompetition: (slug: string, competitionId: string) =>
+    request<{ ok?: boolean }>(`/api/saas/${slug}/competitions/${competitionId}/sync`, {
+      method: 'POST',
+    }),
+  recomputeCompetition: (slug: string, competitionId: string) =>
+    request<{ entriesScored?: number }>(`/api/saas/${slug}/competitions/${competitionId}/recompute`, {
+      method: 'POST',
+    }),
+  patchCompetition: (
+    slug: string,
+    competitionId: string,
+    patch: { showTrendPreClose?: boolean; lockOffsetMin?: number },
+  ) =>
+    request<{ ok: true }>(`/api/saas/${slug}/competitions/${competitionId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }),
 };
+
+export interface SaasAdminPlayer {
+  membershipId: string;
+  role: SaasRole;
+  hasPaid: boolean;
+  paidAt: string | null;
+  paidNote: string | null;
+  joinedAt: string;
+  email: string | null;
+  name: string;
+}
