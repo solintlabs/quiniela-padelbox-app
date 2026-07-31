@@ -38,7 +38,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     if (res.status === 401) {
       await clearToken();
       setTimeout(() => {
-        try { router.replace('/(auth)/login'); } catch {}
+        try { router.replace('/(auth)/(tabs)/login'); } catch {}
       }, 0);
       throw new UnauthenticatedError();
     }

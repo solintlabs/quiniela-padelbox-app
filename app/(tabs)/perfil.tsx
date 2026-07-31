@@ -51,7 +51,7 @@ export default function PerfilScreen() {
       await unregisterPushAsync();
     } catch {}
     await clearToken();
-    router.replace('/(auth)/login');
+    router.replace('/(auth)/(tabs)/login');
   }
 
   function confirmDeleteAccount() {
@@ -89,7 +89,7 @@ export default function PerfilScreen() {
       Alert.alert(
         'Cuenta eliminada',
         'Tu cuenta y todos tus datos han sido eliminados. Gracias por haber participado.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }],
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/(tabs)/login') }],
       );
     } catch (e) {
       Alert.alert(

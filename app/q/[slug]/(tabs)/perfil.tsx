@@ -39,7 +39,7 @@ export default function PerfilTab() {
         style: 'destructive',
         onPress: async () => {
           await clearToken();
-          router.replace('/(auth)/login');
+          router.replace('/(auth)/(tabs)/login');
         },
       },
     ]);

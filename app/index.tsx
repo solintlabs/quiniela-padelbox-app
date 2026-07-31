@@ -13,7 +13,7 @@ export default function Index() {
         // La app abre en el hub multi-quiniela; PADELBOX es una entrada más.
         router.replace('/quinielas');
       } else {
-        router.replace('/(auth)/login');
+        router.replace('/(auth)/(tabs)/login');
       }
     })();
   }, []);
