@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, Share, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, Switch, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { Image } from 'expo-image';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { FALLBACK_SITE, fillSlug, saasApi, type SaasAdminPlayer } from '@/lib/saas-api';
+import { openWebLoggedIn } from '@/lib/web-bridge';
+import { pickLogoDataUrl } from '@/lib/logo-picker';
 import { useTenant } from '@/components/TenantProvider';
 import { TabScreen, ui } from '@/components/tenantUi';
 import { Button } from '@/components/Button';
@@ -35,6 +38,23 @@ export default function AdminTab() {
 
   if (!data || !isOrganizer) return <TabScreen>{null}</TabScreen>;
   const comp = data.competition;
+  const panelPath = `/saas/${slug}/panel`;
+  const panelFallback = fillSlug(config.upgrade.urlTemplate, slug);
+
+  async function changeLogo() {
+    try {
+      const dataUrl = await pickLogoDataUrl();
+      if (!dataUrl) return;
+      setBusy('logo');
+      await saasApi.patchTenantLogo(slug, dataUrl);
+      setNotice('Logo actualizado ✓');
+      await reload();
+    } catch (e) {
+      Alert.alert('Logo', e instanceof Error ? e.message : 'No se pudo subir el logo.');
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function run(key: string, fn: () => Promise<unknown>, okMsg: string) {
     setBusy(key);
@@ -53,6 +73,43 @@ export default function AdminTab() {
 
   return (
     <TabScreen>
+      <View style={ui.card}>
+        <Text style={ui.cardLabel}>Tu marca</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg }}>
+          {data.tenant.logoUrl ? (
+            <Image source={{ uri: data.tenant.logoUrl }} style={s.logo} contentFit="contain" />
+          ) : (
+            <View style={[s.logo, s.logoEmpty]}>
+              <Text style={{ fontFamily: fontFamily.display, fontSize: fontSize.xl, color: accent }}>
+                {data.tenant.name.slice(0, 1).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Button
+              title={busy === 'logo' ? 'Subiendo…' : data.tenant.logoUrl ? 'Cambiar logo' : 'Subir logo'}
+              variant="secondary"
+              loading={busy === 'logo'}
+              onPress={changeLogo}
+            />
+            <Text style={[ui.cardMeta, { marginTop: spacing.xs, fontSize: 11 }]}>
+              Lo ven tus jugadores en la cabecera y en el hub.
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {comp && comp.points && (
+        <PointsEditor
+          slug={slug}
+          competitionId={comp.id}
+          accent={accent}
+          initial={comp.points}
+          championBonus={data.champion?.bonus ?? 0}
+          onSaved={reload}
+        />
+      )}
+
       {comp && (
         <View style={ui.card}>
           <Text style={ui.cardLabel}>Competición</Text>
@@ -186,17 +243,20 @@ export default function AdminTab() {
         <Button
           title="Panel completo (web)"
           variant="secondary"
-          onPress={() => Linking.openURL(fillSlug(config.upgrade.urlTemplate, slug))}
+          onPress={() => openWebLoggedIn(panelPath, panelFallback)}
         />
         {data.me.role === 'OWNER' && data.tenant.plan === 'FREE' && config.upgrade.enabled && (
           <>
             <View style={{ height: spacing.sm }} />
             <Button
               title="⭐ Subir a Pro"
-              onPress={() => Linking.openURL(fillSlug(config.upgrade.urlTemplate, slug))}
+              onPress={() => openWebLoggedIn(panelPath, panelFallback)}
             />
           </>
         )}
+        <Text style={[ui.cardMeta, { marginTop: spacing.sm, fontSize: 11 }]}>
+          Los botones abren la web con tu sesión iniciada automáticamente.
+        </Text>
       </View>
 
       {notice && <Text style={s.notice}>{notice}</Text>}
@@ -204,7 +264,149 @@ export default function AdminTab() {
   );
 }
 
+/**
+ * Reglas de puntuación editables desde el móvil (marcador exacto, ganador,
+ * diferencia de goles, goles por equipo, bonus empate y bonus campeón) —
+ * las mismas que el panel web. Tras guardar conviene «Recalcular puntos».
+ */
+function PointsEditor({
+  slug,
+  competitionId,
+  accent,
+  initial,
+  championBonus,
+  onSaved,
+}: {
+  slug: string;
+  competitionId: string;
+  accent: string;
+  initial: { exact: number; winner: number; goalDiff: number; teamScore: number; drawBonus: number };
+  championBonus: number;
+  onSaved: () => void;
+}) {
+  const [v, setV] = useState({ ...initial, championBonus });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const dirty =
+    v.exact !== initial.exact ||
+    v.winner !== initial.winner ||
+    v.goalDiff !== initial.goalDiff ||
+    v.teamScore !== initial.teamScore ||
+    v.drawBonus !== initial.drawBonus ||
+    v.championBonus !== championBonus;
+
+  async function save() {
+    if (v.exact < v.winner) {
+      Alert.alert('Puntos', 'El marcador exacto no puede valer menos que acertar el ganador.');
+      return;
+    }
+    setSaving(true);
+    setSaved(false);
+    try {
+      await saasApi.patchCompetition(slug, competitionId, {
+        pointsExact: v.exact,
+        pointsWinner: v.winner,
+        pointsGoalDiff: v.goalDiff,
+        pointsTeamScore: v.teamScore,
+        pointsDrawBonus: v.drawBonus,
+        pointsBonus: v.championBonus,
+      });
+      setSaved(true);
+      onSaved();
+    } catch (e) {
+      Alert.alert('No se pudo guardar', e instanceof Error ? e.message : 'Inténtalo de nuevo');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const rows: { key: keyof typeof v; label: string; hint?: string }[] = [
+    { key: 'exact', label: 'Marcador exacto' },
+    { key: 'winner', label: 'Acertar el ganador' },
+    { key: 'goalDiff', label: 'Diferencia de goles', hint: 'Pones 2-0 y acaba 3-1' },
+    { key: 'teamScore', label: 'Goles por equipo clavados' },
+    { key: 'drawBonus', label: 'Extra por clavar un empate' },
+    { key: 'championBonus', label: 'Bonus por acertar el campeón' },
+  ];
+
+  return (
+    <View style={ui.card}>
+      <Text style={ui.cardLabel}>Cómo se puntúa (personalizable)</Text>
+      {rows.map((r) => (
+        <View key={r.key} style={s.pointRow}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={s.settingLabel}>{r.label}</Text>
+            {r.hint && <Text style={ui.cardMeta}>{r.hint}</Text>}
+          </View>
+          <View style={s.pointControls}>
+            <Pressable
+              onPress={() => setV((p) => ({ ...p, [r.key]: Math.max(0, p[r.key] - 1) }))}
+              style={s.pointBtn}
+              hitSlop={6}
+            >
+              <Text style={s.pointBtnText}>−</Text>
+            </Pressable>
+            <Text style={[s.pointValue, { color: accent }]}>{v[r.key]}</Text>
+            <Pressable
+              onPress={() => setV((p) => ({ ...p, [r.key]: Math.min(100, p[r.key] + 1) }))}
+              style={s.pointBtn}
+              hitSlop={6}
+            >
+              <Text style={s.pointBtnText}>＋</Text>
+            </Pressable>
+          </View>
+        </View>
+      ))}
+      {dirty && (
+        <View style={{ marginTop: spacing.md }}>
+          <Button title={saving ? 'Guardando…' : 'Guardar puntos'} loading={saving} onPress={save} />
+          <Text style={[ui.cardMeta, { marginTop: spacing.xs, fontSize: 11 }]}>
+            Tras cambiar los puntos, usa «Recalcular todos los puntos» para aplicarlos a lo ya
+            jugado.
+          </Text>
+        </View>
+      )}
+      {saved && !dirty && <Text style={s.notice}>✓ Puntos guardados</Text>}
+    </View>
+  );
+}
+
 const s = StyleSheet.create({
+  logo: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.md,
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  logoEmpty: { alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed' },
+  pointRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  pointControls: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  pointBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pointBtnText: { color: colors.ink, fontSize: fontSize.base, fontFamily: fontFamily.bold },
+  pointValue: {
+    fontFamily: fontFamily.display,
+    fontSize: fontSize.base,
+    minWidth: 28,
+    textAlign: 'center',
+  },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',

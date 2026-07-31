@@ -134,6 +134,13 @@ export interface SaasPlayPayload {
     /** Presentes desde el backend 2026-07-30 (pestaña Admin). */
     lockOffsetMin?: number;
     showTrendPreClose?: boolean;
+    points?: {
+      exact: number;
+      winner: number;
+      goalDiff: number;
+      teamScore: number;
+      drawBonus: number;
+    };
   } | null;
   fixtures?: SaasFixtureVM[];
   ranking?: SaasRankingRow[];
@@ -198,10 +205,10 @@ export interface SaasPlayerProfile {
 export const saasApi = {
   config: () => request<SaasConfig>('/api/saas/config'),
   tenants: () => request<{ tenants: SaasTenantSummary[] }>('/api/saas/tenants'),
-  createTenant: (name: string, accentColor?: string) =>
+  createTenant: (name: string, accentColor?: string, logoDataUrl?: string) =>
     request<{ ok: true; tenant: { id: string; slug: string; name: string }; panelUrl: string }>(
       '/api/saas/tenants',
-      { method: 'POST', body: JSON.stringify({ name, accentColor }) },
+      { method: 'POST', body: JSON.stringify({ name, accentColor, logoDataUrl }) },
     ),
   play: (slug: string) => request<SaasPlayPayload>(`/api/saas/${slug}/play`),
   submitEntry: (slug: string, fixtureId: string, homeScore: number, awayScore: number) =>
@@ -242,11 +249,31 @@ export const saasApi = {
   patchCompetition: (
     slug: string,
     competitionId: string,
-    patch: { showTrendPreClose?: boolean; lockOffsetMin?: number },
+    patch: {
+      showTrendPreClose?: boolean;
+      lockOffsetMin?: number;
+      pointsExact?: number;
+      pointsWinner?: number;
+      pointsGoalDiff?: number;
+      pointsTeamScore?: number;
+      pointsDrawBonus?: number;
+      pointsBonus?: number;
+    },
   ) =>
     request<{ ok: true }>(`/api/saas/${slug}/competitions/${competitionId}`, {
       method: 'PATCH',
       body: JSON.stringify(patch),
+    }),
+  patchTenantLogo: (slug: string, logoDataUrl: string) =>
+    request<{ tenant: { logoUrl: string | null } }>(`/api/saas/${slug}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ logoDataUrl }),
+    }),
+  /** URL de un solo uso que abre el navegador YA logueado (puente app→web). */
+  bridge: (next: string) =>
+    request<{ url: string }>('/api/auth/bridge', {
+      method: 'POST',
+      body: JSON.stringify({ next }),
     }),
 };
 

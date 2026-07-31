@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +9,7 @@ import {
 import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { FALLBACK_CONFIG, fillSlug, saasApi, type SaasConfig } from '@/lib/saas-api';
+import { openWebLoggedIn } from '@/lib/web-bridge';
 import { Button } from '@/components/Button';
 
 /**
@@ -102,7 +102,12 @@ export default function PlanesScreen() {
               <View style={{ marginTop: spacing.md }}>
                 <Button
                   title="⭐ Subir a Pro"
-                  onPress={() => Linking.openURL(fillSlug(config.upgrade.urlTemplate, slug))}
+                  onPress={() =>
+                    openWebLoggedIn(
+                      `/saas/${slug}/panel`,
+                      fillSlug(config.upgrade.urlTemplate, slug),
+                    )
+                  }
                 />
               </View>
             )}

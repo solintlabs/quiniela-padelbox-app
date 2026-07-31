@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, FlatList, Linking, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
@@ -10,6 +10,7 @@ import {
   type SaasPlayPayload,
   type SaasRankingRow,
 } from '@/lib/saas-api';
+import { openWebLoggedIn } from '@/lib/web-bridge';
 import { useTenant } from '@/components/TenantProvider';
 import { TabScreen, ui } from '@/components/tenantUi';
 import { SaasAdSlot } from '@/components/SaasAdSlot';
@@ -46,7 +47,9 @@ function Inicio({ data }: { data: SaasPlayPayload }) {
           {isOrganizer && (
             <Button
               title="Abrir el panel (web)"
-              onPress={() => Linking.openURL(fillSlug(config.upgrade.urlTemplate, slug))}
+              onPress={() =>
+                openWebLoggedIn(`/saas/${slug}/panel`, fillSlug(config.upgrade.urlTemplate, slug))
+              }
             />
           )}
         </View>
@@ -130,7 +133,9 @@ function Inicio({ data }: { data: SaasPlayPayload }) {
 
       {isOrganizer && data.me.role === 'OWNER' && data.tenant.plan === 'FREE' && config.upgrade.enabled && (
         <Pressable
-          onPress={() => Linking.openURL(fillSlug(config.upgrade.urlTemplate, slug))}
+          onPress={() =>
+            openWebLoggedIn(`/saas/${slug}/panel`, fillSlug(config.upgrade.urlTemplate, slug))
+          }
           style={[ui.card, { borderColor: accent }]}
         >
           <Text style={[ui.cardLabel, { color: accent }]}>⭐ Pásate a Pro</Text>

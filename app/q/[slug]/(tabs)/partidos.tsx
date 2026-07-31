@@ -11,28 +11,74 @@ import { TabScreen, TeamCell, Stepper, ui } from '@/components/tenantUi';
  * a PADELBOX: "✓ Guardado" / "● Sin guardar" / "Sin pronóstico" y la card
  * tintada según el estado.
  */
+type Filter = 'porjugar' | 'resultados' | 'todos';
+
 export default function PartidosTab() {
   const { data, slug, accent, reload } = useTenant();
+  const [filter, setFilter] = useState<Filter>('porjugar');
   const fixtures = data?.fixtures ?? [];
+
+  const upcoming = fixtures.filter((f) => !f.closed);
+  // Resultados: los más recientes primero.
+  const finished = [...fixtures.filter((f) => f.closed)].reverse();
+  const shown = filter === 'porjugar' ? upcoming : filter === 'resultados' ? finished : fixtures;
+
+  // Agrupar por jornada/ronda manteniendo el orden que viene del servidor.
+  const groups: { round: string | null; items: SaasFixtureVM[] }[] = [];
+  for (const f of shown) {
+    const last = groups[groups.length - 1];
+    const round = f.round ?? null;
+    if (last && last.round === round) last.items.push(f);
+    else groups.push({ round, items: [f] });
+  }
+
+  const CHIPS: { key: Filter; label: string; count: number }[] = [
+    { key: 'porjugar', label: 'Por jugar', count: upcoming.length },
+    { key: 'resultados', label: 'Resultados', count: finished.length },
+    { key: 'todos', label: 'Todos', count: fixtures.length },
+  ];
 
   return (
     <TabScreen>
-      {fixtures.length === 0 ? (
+      <View style={s.chipsRow}>
+        {CHIPS.map((c) => (
+          <Pressable
+            key={c.key}
+            onPress={() => setFilter(c.key)}
+            style={[s.chip, filter === c.key && { backgroundColor: accent, borderColor: accent }]}
+          >
+            <Text style={[s.chipText, filter === c.key && { color: colors.accentFg }]}>
+              {c.label} · {c.count}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {shown.length === 0 ? (
         <View style={ui.card}>
-          <Text style={ui.cardMeta}>No hay partidos próximos.</Text>
+          <Text style={ui.cardMeta}>
+            {filter === 'resultados'
+              ? 'Todavía no hay resultados.'
+              : 'No hay partidos por jugar ahora mismo.'}
+          </Text>
         </View>
       ) : (
-        fixtures.map((f) => (
-          <FixtureRow
-            // El marcador guardado forma parte de la key: si cambia en el
-            // servidor la fila se remonta con la verdad nueva.
-            key={`${f.id}:${f.myHome ?? 'x'}-${f.myAway ?? 'x'}`}
-            fixture={f}
-            accent={accent}
-            slug={slug}
-            canPredict={data?.canPredict ?? false}
-            onSaved={reload}
-          />
+        groups.map((g, gi) => (
+          <View key={`${g.round ?? 'sin-ronda'}-${gi}`}>
+            {g.round && <Text style={s.roundHeader}>{g.round}</Text>}
+            {g.items.map((f) => (
+              <FixtureRow
+                // El marcador guardado forma parte de la key: si cambia en el
+                // servidor la fila se remonta con la verdad nueva.
+                key={`${f.id}:${f.myHome ?? 'x'}-${f.myAway ?? 'x'}`}
+                fixture={f}
+                accent={accent}
+                slug={slug}
+                canPredict={data?.canPredict ?? false}
+                onSaved={reload}
+              />
+            ))}
+          </View>
         ))
       )}
     </TabScreen>
@@ -169,6 +215,25 @@ function FixtureRow({
 }
 
 const s = StyleSheet.create({
+  chipsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 7,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgElev,
+  },
+  chipText: { fontFamily: fontFamily.semibold, fontSize: fontSize.xs, color: colors.ink },
+  roundHeader: {
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.xs,
+    color: colors.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
   top: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -12,8 +12,10 @@ import {
   View,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
+import { Image } from 'expo-image';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { FALLBACK_SITE, saasApi } from '@/lib/saas-api';
+import { pickLogoDataUrl } from '@/lib/logo-picker';
 import { Button } from '@/components/Button';
 
 /**
@@ -27,7 +29,17 @@ const ACCENT_CHOICES = ['#B6FF3C', '#3CD3FF', '#FF7A3C', '#FF3C8E', '#C13CFF', '
 export default function CrearQuiniela() {
   const [name, setName] = useState('');
   const [accent, setAccent] = useState(ACCENT_CHOICES[0]);
+  const [logo, setLogo] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  async function chooseLogo() {
+    try {
+      const dataUrl = await pickLogoDataUrl();
+      if (dataUrl) setLogo(dataUrl);
+    } catch (e) {
+      Alert.alert('Logo', e instanceof Error ? e.message : 'No se pudo leer la imagen.');
+    }
+  }
 
   async function create() {
     const trimmed = name.trim();
@@ -37,7 +49,7 @@ export default function CrearQuiniela() {
     }
     setSaving(true);
     try {
-      const res = await saasApi.createTenant(trimmed, accent);
+      const res = await saasApi.createTenant(trimmed, accent, logo ?? undefined);
       const url = `${FALLBACK_SITE}/saas/${res.tenant.slug}`;
       Alert.alert(
         '¡Quiniela creada! 🎉',
@@ -101,6 +113,35 @@ export default function CrearQuiniela() {
           ))}
         </View>
 
+        <Text style={styles.label}>Logo (opcional)</Text>
+        <View style={styles.logoRow}>
+          {logo ? (
+            <Image source={{ uri: logo }} style={styles.logoPreview} contentFit="contain" />
+          ) : (
+            <View style={[styles.logoPreview, styles.logoEmpty]}>
+              <Text style={[styles.logoLetter, { color: accent }]}>
+                {name.trim().slice(0, 1).toUpperCase() || '?'}
+              </Text>
+            </View>
+          )}
+          <View style={{ flex: 1, gap: spacing.xs }}>
+            <Button
+              title={logo ? 'Cambiar logo' : 'Subir logo'}
+              variant="secondary"
+              fullWidth={false}
+              onPress={chooseLogo}
+            />
+            {logo && (
+              <Pressable onPress={() => setLogo(null)}>
+                <Text style={styles.logoRemove}>Quitar</Text>
+              </Pressable>
+            )}
+            <Text style={styles.logoHint}>
+              El escudo de tu club o negocio. Tus jugadores lo verán en la quiniela.
+            </Text>
+          </View>
+        </View>
+
         <View style={{ height: spacing.xl }} />
         <Button title={saving ? 'Creando…' : 'Crear mi quiniela'} onPress={create} loading={saving} />
         <Text style={styles.fine}>
@@ -142,6 +183,24 @@ const styles = StyleSheet.create({
   swatchRow: { flexDirection: 'row', gap: spacing.md },
   swatch: { width: 40, height: 40, borderRadius: radius.full },
   swatchActive: { borderWidth: 3, borderColor: colors.ink },
+  logoRow: { flexDirection: 'row', gap: spacing.lg, alignItems: 'flex-start' },
+  logoPreview: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.md,
+    backgroundColor: colors.bgElev,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  logoEmpty: { alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed' },
+  logoLetter: { fontFamily: fontFamily.display, fontSize: fontSize.xl },
+  logoRemove: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted },
+  logoHint: {
+    fontFamily: fontFamily.body,
+    fontSize: fontSize.xs,
+    color: colors.muted,
+    lineHeight: 16,
+  },
   fine: {
     fontFamily: fontFamily.body,
     fontSize: fontSize.xs,

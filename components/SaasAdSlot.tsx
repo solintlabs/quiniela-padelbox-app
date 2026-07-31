@@ -21,6 +21,7 @@ export function SaasAdSlot() {
         <Text style={{ color: colors.accent }}>BOX</Text>
       </Text>
       <Text style={styles.meta}>Crea la tuya en 1 minuto · quinielabox.com</Text>
+      <Text style={styles.proNote}>El plan Pro quita los anuncios de tu quiniela.</Text>
     </Pressable>
   );
 }
@@ -44,4 +45,10 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink },
   meta: { fontFamily: fontFamily.body, fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  proNote: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 10,
+    color: colors.accent,
+    marginTop: 6,
+  },
 });

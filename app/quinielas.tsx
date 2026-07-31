@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { saasApi, type SaasTenantSummary } from '@/lib/saas-api';
 import { Button } from '@/components/Button';
@@ -23,6 +24,8 @@ export default function QuinielasHub() {
   const [tenants, setTenants] = useState<SaasTenantSummary[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Sin cabecera nativa, el padding superior debe respetar el notch.
+  const insets = useSafeAreaInsets();
 
   const load = useCallback(async () => {
     try {
@@ -46,7 +49,7 @@ export default function QuinielasHub() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingTop: insets.top + spacing.xl }]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -121,7 +124,7 @@ export default function QuinielasHub() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.xl, paddingTop: spacing.xxl },
+  container: { padding: spacing.xl },
   brandRow: { alignItems: 'center', marginBottom: spacing.xs },
   brand: { fontFamily: fontFamily.display, fontSize: fontSize.display, color: colors.ink },
   subtitle: {
