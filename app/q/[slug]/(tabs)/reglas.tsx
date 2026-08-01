@@ -13,11 +13,17 @@ export default function ReglasTab() {
   const { data, slug, accent, config } = useTenant();
   if (!data) return <TabScreen>{null}</TabScreen>;
 
-  const hasInscription =
-    !!data.tenant.entryFee || !!data.tenant.paymentInfo || data.paymentMethods.length > 0;
+  const hasFee = !!data.tenant.entryFee;
 
   return (
     <TabScreen>
+      {data.tenant.description && (
+        <View style={ui.card}>
+          <Text style={ui.cardLabel}>Sobre esta quiniela</Text>
+          <Text style={ui.ruleLine}>{data.tenant.description}</Text>
+        </View>
+      )}
+
       {data.competition && data.competition.pointsSummary.length > 0 && (
         <View style={ui.card}>
           <Text style={ui.cardLabel}>Cómo se puntúa</Text>
@@ -46,12 +52,10 @@ export default function ReglasTab() {
         </View>
       )}
 
-      {hasInscription && (
+      {hasFee ? (
         <View style={ui.card}>
           <Text style={ui.cardLabel}>Inscripción</Text>
-          {data.tenant.entryFee ? (
-            <Text style={[ui.bigNumber, { color: accent }]}>{data.tenant.entryFee}</Text>
-          ) : null}
+          <Text style={[ui.bigNumber, { color: accent }]}>{data.tenant.entryFee}</Text>
           <Text style={[ui.cardMeta, { marginBottom: spacing.md }]}>
             La cuota y las formas de pago se gestionan fuera de la app.
           </Text>
@@ -59,6 +63,14 @@ export default function ReglasTab() {
             title="Cómo pagar tu inscripción"
             onPress={() => Linking.openURL(fillSlug(config.inscriptionUrlTemplate, slug))}
           />
+        </View>
+      ) : (
+        <View style={ui.card}>
+          <Text style={ui.cardLabel}>Inscripción</Text>
+          <Text style={ui.ruleLine}>
+            🎉 Esta quiniela es <Text style={{ fontFamily: 'Inter_700Bold' }}>por diversión</Text>:
+            no hay cuota. Únete y a pronosticar.
+          </Text>
         </View>
       )}
     </TabScreen>

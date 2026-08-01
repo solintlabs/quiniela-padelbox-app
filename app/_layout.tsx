@@ -52,6 +52,7 @@ export default function RootLayout() {
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="quinielas" options={{ headerShown: false }} />
+              <Stack.Screen name="cuenta" options={{ title: 'Mi cuenta' }} />
               <Stack.Screen name="crear-quiniela" options={{ title: 'Crear quiniela' }} />
               <Stack.Screen name="planes" options={{ title: 'Planes' }} />
               <Stack.Screen name="q/[slug]" options={{ headerShown: false }} />

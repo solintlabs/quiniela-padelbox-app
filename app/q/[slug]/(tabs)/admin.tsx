@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
@@ -46,7 +46,7 @@ export default function AdminTab() {
       const dataUrl = await pickLogoDataUrl();
       if (!dataUrl) return;
       setBusy('logo');
-      await saasApi.patchTenantLogo(slug, dataUrl);
+      await saasApi.patchTenant(slug, { logoDataUrl: dataUrl });
       setNotice('Logo actualizado ✓');
       await reload();
     } catch (e) {
@@ -98,6 +98,18 @@ export default function AdminTab() {
           </View>
         </View>
       </View>
+
+      <TenantRulesCard
+        slug={slug}
+        accent={accent}
+        initial={{
+          entryFee: data.tenant.entryFee,
+          rulesText: data.tenant.rulesText,
+          prizesText: data.tenant.prizesText,
+          description: data.tenant.description ?? null,
+        }}
+        onSaved={reload}
+      />
 
       {comp && comp.points && (
         <PointsEditor
@@ -192,7 +204,9 @@ export default function AdminTab() {
       <View style={ui.card}>
         <Text style={ui.cardLabel}>Jugadores {players ? `(${players.length})` : ''}</Text>
         <Text style={[ui.cardMeta, { marginBottom: spacing.sm }]}>
-          Marca quién pagó su inscripción. Sin pagar no se puede pronosticar.
+          {data.tenant.entryFee
+            ? 'Marca quién pagó su inscripción (el pago es FUERA de la app). Sin pagar no se puede pronosticar.'
+            : '🎉 Quiniela por diversión: todos pueden pronosticar sin pagar. El interruptor solo aplica si activas una cuota.'}
         </Text>
         {players?.map((p) => (
           <View key={p.membershipId} style={s.playerRow}>
@@ -261,6 +275,134 @@ export default function AdminTab() {
 
       {notice && <Text style={s.notice}>{notice}</Text>}
     </TabScreen>
+  );
+}
+
+/**
+ * Inscripción y reglas propias de la quiniela: cuota (o "por diversión"),
+ * reglas del organizador (desempates, requisitos…), premios y descripción.
+ * Sin cuota, TODOS pronostican sin que haya que marcar pagos.
+ */
+function TenantRulesCard({
+  slug,
+  accent,
+  initial,
+  onSaved,
+}: {
+  slug: string;
+  accent: string;
+  initial: {
+    entryFee: string | null;
+    rulesText: string | null;
+    prizesText: string | null;
+    description: string | null;
+  };
+  onSaved: () => void;
+}) {
+  const [hasFee, setHasFee] = useState(!!initial.entryFee);
+  const [entryFee, setEntryFee] = useState(initial.entryFee ?? '');
+  const [rulesText, setRulesText] = useState(initial.rulesText ?? '');
+  const [prizesText, setPrizesText] = useState(initial.prizesText ?? '');
+  const [description, setDescription] = useState(initial.description ?? '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const dirty =
+    (hasFee ? entryFee.trim() : '') !== (initial.entryFee ?? '') ||
+    rulesText.trim() !== (initial.rulesText ?? '') ||
+    prizesText.trim() !== (initial.prizesText ?? '') ||
+    description.trim() !== (initial.description ?? '');
+
+  async function save() {
+    if (hasFee && !entryFee.trim()) {
+      Alert.alert('Cuota', 'Escribe la cuota (p. ej. "$10") o apaga el interruptor.');
+      return;
+    }
+    setSaving(true);
+    setSaved(false);
+    try {
+      await saasApi.patchTenant(slug, {
+        entryFee: hasFee ? entryFee.trim() : null,
+        rulesText: rulesText.trim() || null,
+        prizesText: prizesText.trim() || null,
+        description: description.trim() || null,
+      });
+      setSaved(true);
+      onSaved();
+    } catch (e) {
+      Alert.alert('No se pudo guardar', e instanceof Error ? e.message : 'Inténtalo de nuevo');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <View style={ui.card}>
+      <Text style={ui.cardLabel}>Inscripción y reglas</Text>
+
+      <View style={s.settingRowFlat}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={s.settingLabel}>¿Tiene cuota de inscripción?</Text>
+          <Text style={ui.cardMeta}>
+            {hasFee
+              ? 'El bote se paga FUERA de la app; tú marcas quién pagó.'
+              : '🎉 Por diversión: todos juegan sin pagar nada.'}
+          </Text>
+        </View>
+        <Switch value={hasFee} trackColor={{ true: accent }} onValueChange={setHasFee} />
+      </View>
+
+      {hasFee && (
+        <TextInput
+          value={entryFee}
+          onChangeText={setEntryFee}
+          placeholder='Cuota por jugador — ej: "$10" o "10 USDT"'
+          placeholderTextColor={colors.muted}
+          maxLength={120}
+          style={s.input}
+        />
+      )}
+
+      <Text style={s.inputLabel}>Reglas propias (desempates, requisitos…)</Text>
+      <TextInput
+        value={rulesText}
+        onChangeText={setRulesText}
+        placeholder={'Ej: "Desempate: más marcadores exactos. Hay que pronosticar antes del viernes."'}
+        placeholderTextColor={colors.muted}
+        multiline
+        maxLength={4000}
+        style={[s.input, s.inputMulti]}
+      />
+
+      <Text style={s.inputLabel}>Premios</Text>
+      <TextInput
+        value={prizesText}
+        onChangeText={setPrizesText}
+        placeholder={'Ej: "🥇 60% del bote · 🥈 30% · 🥉 10%"'}
+        placeholderTextColor={colors.muted}
+        multiline
+        maxLength={4000}
+        style={[s.input, s.inputMulti]}
+      />
+
+      <Text style={s.inputLabel}>Descripción y duración</Text>
+      <TextInput
+        value={description}
+        onChangeText={setDescription}
+        placeholder={'Ej: "Quiniela del Mundial 2026 — de junio a julio."'}
+        placeholderTextColor={colors.muted}
+        multiline
+        maxLength={500}
+        style={[s.input, s.inputMulti]}
+      />
+
+      {dirty && (
+        <View style={{ marginTop: spacing.md }}>
+          <Button title={saving ? 'Guardando…' : 'Guardar cambios'} loading={saving} onPress={save} />
+        </View>
+      )}
+      {saved && !dirty && <Text style={s.notice}>✓ Guardado</Text>}
+    </View>
   );
 }
 
@@ -415,6 +557,33 @@ const s = StyleSheet.create({
     paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+  },
+  settingRowFlat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  input: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.ink,
+    fontFamily: fontFamily.body,
+    fontSize: fontSize.sm,
+    marginBottom: spacing.xs,
+  },
+  inputMulti: { minHeight: 64, textAlignVertical: 'top' },
+  inputLabel: {
+    fontFamily: fontFamily.semibold,
+    fontSize: 11,
+    color: colors.muted,
+    marginTop: spacing.sm,
+    marginBottom: 4,
   },
   settingLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.sm, color: colors.ink },
   lockControls: { flexDirection: 'row', gap: 6 },

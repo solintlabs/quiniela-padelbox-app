@@ -109,6 +109,8 @@ export interface SaasPlayPayload {
     accentColor: string | null;
     logoUrl: string | null;
     plan: SaasPlanId;
+    /** Presente desde el backend 2026-08-01. */
+    description?: string | null;
     prizesText: string | null;
     rulesText: string | null;
     entryFee: string | null;
@@ -205,10 +207,16 @@ export interface SaasPlayerProfile {
 export const saasApi = {
   config: () => request<SaasConfig>('/api/saas/config'),
   tenants: () => request<{ tenants: SaasTenantSummary[] }>('/api/saas/tenants'),
-  createTenant: (name: string, accentColor?: string, logoDataUrl?: string) =>
+  createTenant: (name: string, accentColor?: string, logoDataUrl?: string, description?: string) =>
     request<{ ok: true; tenant: { id: string; slug: string; name: string }; panelUrl: string }>(
       '/api/saas/tenants',
-      { method: 'POST', body: JSON.stringify({ name, accentColor, logoDataUrl }) },
+      { method: 'POST', body: JSON.stringify({ name, accentColor, logoDataUrl, description }) },
+    ),
+  /** Unirse a una quiniela con su código (el identificador del link). */
+  join: (code: string) =>
+    request<{ ok: true; role: SaasRole; hasPaid: boolean; url: string }>(
+      `/api/saas/${encodeURIComponent(code.trim().toLowerCase())}/join`,
+      { method: 'POST' },
     ),
   play: (slug: string) => request<SaasPlayPayload>(`/api/saas/${slug}/play`),
   submitEntry: (slug: string, fixtureId: string, homeScore: number, awayScore: number) =>
@@ -264,10 +272,20 @@ export const saasApi = {
       method: 'PATCH',
       body: JSON.stringify(patch),
     }),
-  patchTenantLogo: (slug: string, logoDataUrl: string) =>
+  patchTenant: (
+    slug: string,
+    patch: {
+      logoDataUrl?: string;
+      description?: string | null;
+      rulesText?: string | null;
+      prizesText?: string | null;
+      entryFee?: string | null;
+      paymentInfo?: string | null;
+    },
+  ) =>
     request<{ tenant: { logoUrl: string | null } }>(`/api/saas/${slug}`, {
       method: 'PATCH',
-      body: JSON.stringify({ logoDataUrl }),
+      body: JSON.stringify(patch),
     }),
   /** URL de un solo uso que abre el navegador YA logueado (puente app→web). */
   bridge: (next: string) =>

@@ -30,6 +30,7 @@ export default function CrearQuiniela() {
   const [name, setName] = useState('');
   const [accent, setAccent] = useState(ACCENT_CHOICES[0]);
   const [logo, setLogo] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
   async function chooseLogo() {
@@ -49,7 +50,12 @@ export default function CrearQuiniela() {
     }
     setSaving(true);
     try {
-      const res = await saasApi.createTenant(trimmed, accent, logo ?? undefined);
+      const res = await saasApi.createTenant(
+        trimmed,
+        accent,
+        logo ?? undefined,
+        description.trim() || undefined,
+      );
       const url = `${FALLBACK_SITE}/saas/${res.tenant.slug}`;
       Alert.alert(
         '¡Quiniela creada! 🎉',
@@ -141,6 +147,17 @@ export default function CrearQuiniela() {
             </Text>
           </View>
         </View>
+
+        <Text style={styles.label}>Descripción y duración (opcional)</Text>
+        <TextInput
+          value={description}
+          onChangeText={setDescription}
+          placeholder={'Ej: "La quiniela del Mundial 2026 del club — de junio a julio."'}
+          placeholderTextColor={colors.muted}
+          multiline
+          maxLength={500}
+          style={[styles.input, { height: 72, paddingTop: spacing.md, textAlignVertical: 'top' }]}
+        />
 
         <View style={{ height: spacing.xl }} />
         <Button title={saving ? 'Creando…' : 'Crear mi quiniela'} onPress={create} loading={saving} />
