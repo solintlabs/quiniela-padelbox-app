@@ -1,9 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fontFamily } from '@/lib/theme';
+import { useI18n } from '@/lib/i18n';
 
 /** Tab bar pre-login: vender antes de pedir el email. */
 export default function AuthTabsLayout() {
+  const { t } = useI18n();
   return (
     <Tabs
       initialRouteName="login"
@@ -23,7 +25,7 @@ export default function AuthTabsLayout() {
       <Tabs.Screen
         name="login"
         options={{
-          title: 'Entrar',
+          title: t('tabs.enter'),
           // El login es full-bleed (fondo de estadio): sin cabecera.
           headerShown: false,
           tabBarIcon: ({ color, size }) => <Ionicons name="log-in-outline" size={size} color={color} />,
@@ -32,14 +34,14 @@ export default function AuthTabsLayout() {
       <Tabs.Screen
         name="descubre"
         options={{
-          title: 'Descubre',
+          title: t('tabs.discover'),
           tabBarIcon: ({ color, size }) => <Ionicons name="sparkles-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="planes"
         options={{
-          title: 'Planes',
+          title: t('tabs.plans'),
           tabBarIcon: ({ color, size }) => <Ionicons name="pricetag-outline" size={size} color={color} />,
         }}
       />

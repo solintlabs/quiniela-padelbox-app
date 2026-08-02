@@ -3,6 +3,7 @@ import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { colors, fontFamily } from '@/lib/theme';
+import { useI18n } from '@/lib/i18n';
 import { useTenant } from '@/components/TenantProvider';
 
 /**
@@ -49,6 +50,7 @@ function TenantHeaderTitle() {
 
 export default function TenantTabsLayout() {
   const { accent, isOrganizer } = useTenant();
+  const { t } = useI18n();
   return (
     <Tabs
       screenOptions={{
@@ -67,42 +69,42 @@ export default function TenantTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Inicio',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="partidos"
         options={{
-          title: 'Partidos',
+          title: t('tabs.matches'),
           tabBarIcon: ({ color, size }) => <Ionicons name="football-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="ranking"
         options={{
-          title: 'Ranking',
+          title: t('tabs.ranking'),
           tabBarIcon: ({ color, size }) => <Ionicons name="trophy-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="reglas"
         options={{
-          title: 'Reglas',
+          title: t('tabs.rules'),
           tabBarIcon: ({ color, size }) => <Ionicons name="book-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="perfil"
         options={{
-          title: 'Perfil',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="admin"
         options={{
-          title: 'Admin',
+          title: t('tabs.admin'),
           // Oculta del todo para jugadores; el backend re-verifica igualmente.
           href: isOrganizer ? undefined : null,
           tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,

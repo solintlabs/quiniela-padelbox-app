@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, fontFamily, fontSize, spacing } from '@/lib/theme';
 import { saasApi, type SaasPlayerProfile } from '@/lib/saas-api';
 import { clearToken } from '@/lib/auth';
@@ -124,9 +125,15 @@ export default function PerfilTab() {
       )}
 
       {/* Navegación global: siempre visible, como pidió el dueño. */}
-      <Pressable onPress={() => router.navigate('/quinielas')} style={ui.linkRow}>
-        <Text style={ui.linkLabel}>🏆 Mis quinielas</Text>
-        <Text style={ui.linkArrow}>→</Text>
+      <Pressable
+        onPress={() => router.navigate('/quinielas')}
+        style={({ pressed }) => [ui.linkRow, pressed && { opacity: 0.8 }]}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <Ionicons name="trophy-outline" size={19} color={colors.ink} />
+          <Text style={ui.linkLabel}>Mis quinielas</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={colors.muted} />
       </Pressable>
 
       <Button title="Cerrar sesión" variant="secondary" onPress={logout} />

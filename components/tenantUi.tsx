@@ -1,7 +1,8 @@
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { useTenant } from '@/components/TenantProvider';
+import { SkeletonList } from '@/components/Skeleton';
 import { Button } from '@/components/Button';
 
 /** Piezas de UI compartidas por las pestañas de una quiniela SaaS. */
@@ -15,16 +16,18 @@ export function TabScreen({ children }: { children: React.ReactNode }) {
   const { data, error, refreshing, refresh, reload, accent } = useTenant();
 
   if (!data) {
+    if (error) {
+      return (
+        <View style={ui.center}>
+          <Text style={ui.errorText}>{error}</Text>
+          <Button title="Reintentar" onPress={reload} fullWidth={false} />
+        </View>
+      );
+    }
+    // Skeleton en vez de spinner: se insinúa el layout que viene.
     return (
-      <View style={ui.center}>
-        {error ? (
-          <>
-            <Text style={ui.errorText}>{error}</Text>
-            <Button title="Reintentar" onPress={reload} fullWidth={false} />
-          </>
-        ) : (
-          <ActivityIndicator color={colors.accent} />
-        )}
+      <View style={{ flex: 1, backgroundColor: colors.bg, padding: spacing.lg }}>
+        <SkeletonList count={4} />
       </View>
     );
   }

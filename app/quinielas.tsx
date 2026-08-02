@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   Pressable,
@@ -19,6 +18,8 @@ import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { api } from '@/lib/api';
 import { saasApi, type SaasTenantSummary } from '@/lib/saas-api';
 import { registerForPushAsync } from '@/lib/push';
+import { useI18n } from '@/lib/i18n';
+import { SkeletonList } from '@/components/Skeleton';
 import { Button } from '@/components/Button';
 
 /**
@@ -36,6 +37,7 @@ export default function QuinielasHub() {
   const [joinCode, setJoinCode] = useState('');
   const [joining, setJoining] = useState(false);
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
 
   // Entrada animada de la marca: sube y aparece con un muelle suave.
   const brandAnim = useRef(new Animated.Value(0)).current;
@@ -140,9 +142,7 @@ export default function QuinielasHub() {
         <Text style={styles.brand}>
           Quiniela<Text style={{ color: colors.accent }}>BOX</Text>
         </Text>
-        <Text style={styles.hello}>
-          {firstName ? `¡Hola, ${firstName}! 👋` : '¡Hola! 👋'} Estas son tus quinielas
-        </Text>
+        <Text style={styles.hello}>{t('hub.hello', { name: firstName ? `, ${firstName}` : '' })}</Text>
       </Animated.View>
 
       <View style={{ height: spacing.xl }} />
@@ -163,7 +163,7 @@ export default function QuinielasHub() {
       </Pressable>
 
       {loading ? (
-        <ActivityIndicator color={colors.accent} style={{ marginVertical: spacing.xl }} />
+        <SkeletonList count={2} />
       ) : (
         tenants?.map((t) => (
           <Pressable
@@ -191,12 +191,12 @@ export default function QuinielasHub() {
       )}
 
       <View style={{ height: spacing.lg }} />
-      <Button title="＋ Crear mi quiniela" onPress={() => router.push('/crear-quiniela')} />
+      <Button title={t('hub.create')} onPress={() => router.push('/crear-quiniela')} />
       <View style={{ height: spacing.sm }} />
 
       {joinOpen ? (
         <View style={styles.joinBox}>
-          <Text style={styles.joinLabel}>Código de la quiniela</Text>
+          <Text style={styles.joinLabel}>{t('hub.joinLabel')}</Text>
           <TextInput
             value={joinCode}
             onChangeText={setJoinCode}
@@ -209,23 +209,23 @@ export default function QuinielasHub() {
             onSubmitEditing={join}
           />
           <Text style={styles.joinHint}>
-            Es el nombre corto del link de invitación: quinielabox.com/saas/<Text style={{ color: colors.ink }}>código</Text>
+            {t('hub.joinHint')}: quinielabox.com/saas/<Text style={{ color: colors.ink }}>código</Text>
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
             <View style={{ flex: 1 }}>
-              <Button title="Cancelar" variant="secondary" onPress={() => setJoinOpen(false)} />
+              <Button title={t('hub.cancel')} variant="secondary" onPress={() => setJoinOpen(false)} />
             </View>
             <View style={{ flex: 1 }}>
-              <Button title={joining ? 'Uniendo…' : 'Unirme'} loading={joining} onPress={join} />
+              <Button title={joining ? t('hub.joining') : t('hub.joinCta')} loading={joining} onPress={join} />
             </View>
           </View>
         </View>
       ) : (
-        <Button title="🎟 Unirme con un código" variant="secondary" onPress={() => setJoinOpen(true)} />
+        <Button title={t('hub.join')} variant="secondary" onPress={() => setJoinOpen(true)} />
       )}
 
       <Pressable onPress={() => router.push('/planes')} style={{ paddingVertical: spacing.lg }}>
-        <Text style={styles.plansLink}>Ver planes y precios</Text>
+        <Text style={styles.plansLink}>{t('hub.plansLink')}</Text>
       </Pressable>
     </ScrollView>
   );

@@ -18,6 +18,7 @@ import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { Button } from '@/components/Button';
 import { loginWithApple, loginWithGoogle, requestLoginCode } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -43,6 +44,7 @@ export default function LoginScreen() {
   const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -131,7 +133,7 @@ export default function LoginScreen() {
 
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Nombre</Text>
+              <Text style={styles.label}>{t('login.name')}</Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
@@ -144,7 +146,7 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Teléfono (opcional)</Text>
+              <Text style={styles.label}>{t('login.phone')}</Text>
               <TextInput
                 value={phone}
                 onChangeText={setPhone}
@@ -158,7 +160,7 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>{t('login.email')}</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
@@ -172,7 +174,7 @@ export default function LoginScreen() {
               />
             </View>
 
-            <Button title="ENVIAR CÓDIGO" onPress={onSubmit} loading={loading} disabled={!email.trim()} />
+            <Button title={t('login.sendCode')} onPress={onSubmit} loading={loading} disabled={!email.trim()} />
             {error && <Text style={styles.error}>{error}</Text>}
 
             <Text style={styles.hint}>
@@ -186,7 +188,7 @@ export default function LoginScreen() {
             <View style={styles.socialBox}>
               <View style={styles.dividerRow}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>o continúa con</Text>
+                <Text style={styles.dividerText}>{t('login.or')}</Text>
                 <View style={styles.dividerLine} />
               </View>
               {appleAvailable && (
@@ -204,7 +206,7 @@ export default function LoginScreen() {
                   style={({ pressed }) => [styles.googleBtn, pressed && { opacity: 0.85 }]}
                 >
                   <Text style={styles.googleG}>G</Text>
-                  <Text style={styles.googleText}>Continuar con Google</Text>
+                  <Text style={styles.googleText}>{t('login.google')}</Text>
                 </Pressable>
               )}
             </View>

@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from '@/lib/theme';
+import { I18nProvider } from '@/lib/i18n';
 import { configureNotificationHandler } from '@/lib/push';
 
 SplashScreen.preventAutoHideAsync();
@@ -34,6 +35,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <I18nProvider>
       <SafeAreaProvider>
         <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center' }}>
           <StatusBar style="light" backgroundColor={colors.bg} />
@@ -66,6 +68,7 @@ export default function RootLayout() {
           </View>
         </View>
       </SafeAreaProvider>
+      </I18nProvider>
     </GestureHandlerRootView>
   );
 }

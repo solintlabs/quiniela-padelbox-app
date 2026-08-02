@@ -47,7 +47,7 @@ export default function PlanesScreen() {
     >
       <Stack.Screen options={{ title: 'Planes' }} />
 
-      {config.plans.length === 0 && (
+      {(config.displayPlans ?? []).length === 0 && config.plans.length === 0 && (
         <View style={styles.card}>
           <Text style={styles.meta}>
             No se pudieron cargar los planes. Encuéntralos en quinielabox.com.
@@ -55,65 +55,41 @@ export default function PlanesScreen() {
         </View>
       )}
 
-      {config.plans.map((p) => {
-        const isPro = p.id === 'PRO';
-        return (
-          <View
-            key={p.id}
-            style={[styles.card, isPro && { borderColor: colors.accent, borderWidth: 2 }]}
-          >
-            {isPro && <Text style={styles.proTag}>⭐ RECOMENDADO</Text>}
-            <View style={styles.planHead}>
-              <Text style={[styles.planName, isPro && { color: colors.accent }]}>{p.name}</Text>
-              <Text style={styles.planPrice}>
-                {p.priceUsd === null
-                  ? 'A medida'
-                  : p.priceUsd === 0
-                    ? 'Gratis'
-                    : `$${p.priceUsd}/${p.period ?? 'mes'}`}
-              </Text>
+      {(config.displayPlans ?? []).map((p) => (
+        <View
+          key={p.id}
+          style={[styles.card, p.recommended && { borderColor: colors.accent, borderWidth: 2 }]}
+        >
+          {p.recommended && <Text style={styles.proTag}>RECOMENDADO</Text>}
+          <View style={styles.planHead}>
+            <Text style={[styles.planName, p.recommended && { color: colors.accent }]}>
+              {p.name}
+            </Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.planPrice}>{p.priceBig}</Text>
+              <Text style={styles.priceSub}>{p.priceSub}</Text>
             </View>
-            {isPro && p.season && (
-              <Text style={[styles.meta, { color: colors.accent, marginBottom: spacing.xs }]}>
-                ⭐ Mejor precio: ${p.season.priceUsd}/temporada — pago único, cubre el torneo
-              </Text>
-            )}
-            <Text style={[styles.meta, { marginBottom: spacing.sm }]}>{p.tagline}</Text>
-            <Feature
-              text={
-                p.limits.maxPlayers === null
-                  ? 'Jugadores ilimitados'
-                  : `Hasta ${p.limits.maxPlayers} jugadores`
-              }
-            />
-            <Feature
-              text={
-                p.limits.maxCompetitions === null
-                  ? 'Competiciones ilimitadas'
-                  : `${p.limits.maxCompetitions} competición${p.limits.maxCompetitions === 1 ? '' : 'es'} a la vez`
-              }
-            />
-            <Feature text={p.limits.showsAds ? 'Con anuncios' : 'Sin anuncios'} />
-            <Feature
-              text={p.limits.removeBranding ? 'Tu marca, tu color y tu logo' : 'Marca QuinielaBOX'}
-            />
-
-            {isPro && slug && config.upgrade.enabled && (
-              <View style={{ marginTop: spacing.md }}>
-                <Button
-                  title="⭐ Subir a Pro"
-                  onPress={() =>
-                    openWebLoggedIn(
-                      `/saas/${slug}/panel`,
-                      fillSlug(config.upgrade.urlTemplate, slug),
-                    )
-                  }
-                />
-              </View>
-            )}
           </View>
-        );
-      })}
+          <Text style={[styles.meta, { marginBottom: spacing.sm }]}>{p.tagline}</Text>
+          {p.features.map((f) => (
+            <Feature key={f} text={f} />
+          ))}
+          {p.upgradable && slug && config.upgrade.enabled && (
+            <View style={{ marginTop: spacing.md }}>
+              <Button
+                title={`Elegir ${p.name}`}
+                variant={p.recommended ? 'primary' : 'secondary'}
+                onPress={() =>
+                  openWebLoggedIn(
+                    `/saas/${slug}/panel`,
+                    fillSlug(config.upgrade.urlTemplate, slug),
+                  )
+                }
+              />
+            </View>
+          )}
+        </View>
+      ))}
 
       <Text style={styles.fine}>
         {config.upgrade.enabled && slug
@@ -158,6 +134,7 @@ const styles = StyleSheet.create({
   },
   planName: { fontFamily: fontFamily.display, fontSize: fontSize.xl, color: colors.ink },
   planPrice: { fontFamily: fontFamily.bold, fontSize: fontSize.lg, color: colors.ink },
+  priceSub: { fontFamily: fontFamily.body, fontSize: 10, color: colors.muted, marginTop: 1 },
   meta: { fontFamily: fontFamily.body, fontSize: fontSize.sm, color: colors.muted },
   featureRow: {
     flexDirection: 'row',

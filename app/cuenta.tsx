@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, router, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { api, type ApiUser } from '@/lib/api';
 import { clearToken } from '@/lib/auth';
 import { registerForPushAsync, unregisterPushAsync } from '@/lib/push';
+import { useI18n, type Locale } from '@/lib/i18n';
 import { Button } from '@/components/Button';
 
 /**
@@ -14,6 +16,7 @@ import { Button } from '@/components/Button';
  */
 export default function CuentaScreen() {
   const [me, setMe] = useState<ApiUser | null>(null);
+  const { t, locale, setLocale } = useI18n();
 
   useFocusEffect(
     useCallback(() => {
@@ -84,37 +87,85 @@ export default function CuentaScreen() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ padding: spacing.xl, paddingBottom: spacing.xxl }}
     >
-      <Stack.Screen options={{ title: 'Mi cuenta' }} />
+      <Stack.Screen options={{ title: t('account.title') }} />
 
       <View style={styles.card}>
         <Text style={styles.avatar}>{(me?.name ?? me?.email ?? '?').slice(0, 1).toUpperCase()}</Text>
-        <Text style={styles.name}>{me?.name ?? 'Sin nombre'}</Text>
+        <Text style={styles.name}>{me?.name ?? '—'}</Text>
         <Text style={styles.email}>{me?.email ?? '…'}</Text>
       </View>
 
-      <Pressable onPress={enableNotifications} style={styles.row}>
-        <Text style={styles.rowLabel}>🔔 Activar notificaciones</Text>
-        <Text style={styles.rowArrow}>→</Text>
-      </Pressable>
-      <Pressable onPress={() => router.navigate('/quinielas')} style={styles.row}>
-        <Text style={styles.rowLabel}>🏆 Mis quinielas</Text>
-        <Text style={styles.rowArrow}>→</Text>
-      </Pressable>
-      <Pressable
+      <Row
+        icon="notifications-outline"
+        label={t('account.notifications')}
+        onPress={enableNotifications}
+      />
+      <Row
+        icon="trophy-outline"
+        label={t('account.myPools')}
+        onPress={() => router.navigate('/quinielas')}
+      />
+      <Row
+        icon="chatbubble-ellipses-outline"
+        label={t('account.support')}
+        external
         onPress={() => Linking.openURL('https://www.quinielabox.com/soporte')}
-        style={styles.row}
-      >
-        <Text style={styles.rowLabel}>💬 Soporte</Text>
-        <Text style={styles.rowArrow}>↗</Text>
-      </Pressable>
+      />
+
+      {/* Idioma de la app (el contenido de cada quiniela lo escribe su organizador). */}
+      <View style={styles.row}>
+        <View style={styles.rowLeft}>
+          <Ionicons name="globe-outline" size={19} color={colors.ink} />
+          <Text style={styles.rowLabel}>{t('account.language')}</Text>
+        </View>
+        <View style={styles.langChips}>
+          {(['es', 'en'] as Locale[]).map((l) => (
+            <Pressable
+              key={l}
+              onPress={() => setLocale(l)}
+              style={[styles.langChip, locale === l && styles.langChipOn]}
+            >
+              <Text style={[styles.langChipText, locale === l && { color: colors.accentFg }]}>
+                {l.toUpperCase()}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
 
       <View style={{ height: spacing.xl }} />
-      <Button title="Cerrar sesión" variant="secondary" onPress={logout} />
+      <Button title={t('account.logout')} variant="secondary" onPress={logout} />
 
       <Pressable onPress={confirmDelete} style={{ marginTop: spacing.xl }}>
-        <Text style={styles.deleteLink}>Eliminar mi cuenta</Text>
+        <Text style={styles.deleteLink}>{t('account.delete')}</Text>
       </Pressable>
     </ScrollView>
+  );
+}
+
+function Row({
+  icon,
+  label,
+  external,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  external?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]}>
+      <View style={styles.rowLeft}>
+        <Ionicons name={icon} size={19} color={colors.ink} />
+        <Text style={styles.rowLabel}>{label}</Text>
+      </View>
+      <Ionicons
+        name={external ? 'open-outline' : 'chevron-forward'}
+        size={16}
+        color={colors.muted}
+      />
+    </Pressable>
   );
 }
 
@@ -154,8 +205,19 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.sm,
   },
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1, minWidth: 0 },
   rowLabel: { fontFamily: fontFamily.semibold, fontSize: fontSize.base, color: colors.ink },
-  rowArrow: { fontFamily: fontFamily.body, fontSize: fontSize.base, color: colors.muted },
+  langChips: { flexDirection: 'row', gap: 6 },
+  langChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bg,
+  },
+  langChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  langChipText: { fontFamily: fontFamily.semibold, fontSize: 12, color: colors.ink },
   deleteLink: {
     fontFamily: fontFamily.body,
     fontSize: fontSize.sm,

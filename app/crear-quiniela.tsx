@@ -58,7 +58,7 @@ export default function CrearQuiniela() {
       );
       const url = `${FALLBACK_SITE}/saas/${res.tenant.slug}`;
       Alert.alert(
-        '¡Quiniela creada! 🎉',
+        '¡Quiniela creada!',
         'Invita a tu gente y añade la competición desde el panel.',
         [
           {

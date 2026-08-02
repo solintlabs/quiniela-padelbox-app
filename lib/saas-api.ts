@@ -30,8 +30,23 @@ export interface SaasPlan {
   limits: SaasPlanLimits;
 }
 
+/** Tarjeta de plan lista para pintar (Pro Temporada y Mensual separados). */
+export interface SaasDisplayPlan {
+  id: 'FREE' | 'PRO_SEASON' | 'PRO_MONTHLY' | 'CUSTOM';
+  planId: SaasPlanId;
+  name: string;
+  priceBig: string;
+  priceSub: string;
+  tagline: string;
+  features: string[];
+  recommended: boolean;
+  upgradable: boolean;
+}
+
 export interface SaasConfig {
   plans: SaasPlan[];
+  /** Presente desde el backend 2026-08-01. */
+  displayPlans?: SaasDisplayPlan[];
   upgrade: {
     /** Kill switch remoto: si Apple/Google objetan el link de pago se apaga sin build nuevo. */
     enabled: boolean;

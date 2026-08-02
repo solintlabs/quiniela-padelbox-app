@@ -206,7 +206,7 @@ export default function AdminTab() {
         <Text style={[ui.cardMeta, { marginBottom: spacing.sm }]}>
           {data.tenant.entryFee
             ? 'Marca quién pagó su inscripción (el pago es FUERA de la app). Sin pagar no se puede pronosticar.'
-            : '🎉 Quiniela por diversión: todos pueden pronosticar sin pagar. El interruptor solo aplica si activas una cuota.'}
+            : 'Quiniela por diversión: todos pueden pronosticar sin pagar. El interruptor solo aplica si activas una cuota.'}
         </Text>
         {players?.map((p) => (
           <View key={p.membershipId} style={s.playerRow}>
@@ -346,7 +346,7 @@ function TenantRulesCard({
           <Text style={ui.cardMeta}>
             {hasFee
               ? 'El bote se paga FUERA de la app; tú marcas quién pagó.'
-              : '🎉 Por diversión: todos juegan sin pagar nada.'}
+              : 'Por diversión: todos juegan sin pagar nada.'}
           </Text>
         </View>
         <Switch value={hasFee} trackColor={{ true: accent }} onValueChange={setHasFee} />
@@ -356,7 +356,7 @@ function TenantRulesCard({
         <TextInput
           value={entryFee}
           onChangeText={setEntryFee}
-          placeholder='Cuota por jugador — ej: "$10" o "10 USDT"'
+          placeholder='Cuota por jugador — ej: "$10"'
           placeholderTextColor={colors.muted}
           maxLength={120}
           style={s.input}

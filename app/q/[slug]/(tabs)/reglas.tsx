@@ -67,9 +67,32 @@ export default function ReglasTab() {
       ) : (
         <View style={ui.card}>
           <Text style={ui.cardLabel}>Inscripción</Text>
+          <View
+            style={{
+              alignSelf: 'flex-start',
+              borderWidth: 1,
+              borderColor: accent,
+              backgroundColor: accent + '18',
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              marginBottom: spacing.sm,
+            }}
+          >
+            <Text
+              style={{
+                color: accent,
+                fontSize: 11,
+                letterSpacing: 1,
+                textTransform: 'uppercase',
+                fontFamily: 'Inter_600SemiBold',
+              }}
+            >
+              Por diversión
+            </Text>
+          </View>
           <Text style={ui.ruleLine}>
-            🎉 Esta quiniela es <Text style={{ fontFamily: 'Inter_700Bold' }}>por diversión</Text>:
-            no hay cuota. Únete y a pronosticar.
+            Esta quiniela no tiene cuota de inscripción. Únete y a pronosticar.
           </Text>
         </View>
       )}
