@@ -148,7 +148,21 @@ function Inicio({ data }: { data: SaasPlayPayload }) {
         </Pressable>
       )}
 
-      {data.tenant.plan === 'FREE' && <SaasAdSlot />}
+      {data.tenant.plan === 'FREE' && (
+        <SaasAdSlot
+          variant={data.me.role === 'OWNER' ? 'owner' : 'player'}
+          priceLabel={pro?.season ? `$${pro.season.priceUsd} ${pro.season.label}` : undefined}
+          onUpgrade={
+            data.me.role === 'OWNER' && config.upgrade.enabled && slug
+              ? () =>
+                  openWebLoggedIn(
+                    `/saas/${slug}/panel`,
+                    fillSlug(config.upgrade.urlTemplate, slug),
+                  )
+              : undefined
+          }
+        />
+      )}
 
       {isOrganizer && (
         <Button

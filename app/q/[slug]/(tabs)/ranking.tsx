@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
+import { SaasAdSlot } from '@/components/SaasAdSlot';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { useTenant } from '@/components/TenantProvider';
 import { TabScreen, ui } from '@/components/tenantUi';
@@ -49,6 +50,10 @@ export default function RankingTab() {
           </Pressable>
         ))
       )}
+
+      {/* Anuncio del plan gratuito. Al FINAL de la lista, nunca intercalado:
+          no estorba lo que la persona vino a hacer y aun así se ve. */}
+      {data?.tenant.plan === 'FREE' && <SaasAdSlot />}
     </TabScreen>
   );
 }

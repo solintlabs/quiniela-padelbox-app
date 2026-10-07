@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { SaasAdSlot } from '@/components/SaasAdSlot';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { saasApi, type SaasFixtureVM } from '@/lib/saas-api';
 import { useTenant } from '@/components/TenantProvider';
@@ -81,6 +82,10 @@ export default function PartidosTab() {
           </View>
         ))
       )}
+
+      {/* Anuncio del plan gratuito. Al FINAL de la lista, nunca intercalado:
+          no estorba lo que la persona vino a hacer y aun así se ve. */}
+      {data?.tenant.plan === 'FREE' && <SaasAdSlot />}
     </TabScreen>
   );
 }
