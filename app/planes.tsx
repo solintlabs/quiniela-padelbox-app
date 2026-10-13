@@ -19,8 +19,13 @@ import { Button } from '@/components/Button';
  * revisor lo objeta, la pantalla queda solo informativa sin build nuevo.
  */
 export default function PlanesScreen() {
-  const { slug } = useLocalSearchParams<{ slug?: string }>();
+  const { slug: slugParam } = useLocalSearchParams<{ slug?: string }>();
   const [config, setConfig] = useState<SaasConfig | null>(null);
+  // Quinielas que ADMINISTRA el usuario. Hacen falta cuando se entra a Planes
+  // desde el menú general (sin quiniela en contexto): sin esto la pantalla
+  // enseñaba los precios pero ningún botón para pagar, que es justo donde se
+  // perdía la venta.
+  const [owned, setOwned] = useState<Array<{ slug: string; name: string; plan: string }>>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -28,8 +33,23 @@ export default function PlanesScreen() {
         .config()
         .then(setConfig)
         .catch(() => setConfig(FALLBACK_CONFIG));
+      saasApi
+        .tenants()
+        .then((r) =>
+          setOwned(
+            r.tenants
+              .filter((t) => t.role === 'OWNER' && t.plan === 'FREE')
+              .map((t) => ({ slug: t.slug, name: t.name, plan: t.plan })),
+          ),
+        )
+        .catch(() => setOwned([]));
     }, []),
   );
+
+  // Si no vino por parámetro y solo administra una quiniela gratuita, se usa
+  // esa: lo normal es que quien entra a Planes quiera mejorar la suya.
+  const slug = slugParam ?? (owned.length === 1 ? owned[0].slug : undefined);
+  const mustChoose = !slugParam && owned.length > 1;
 
   if (!config) {
     return (
@@ -52,6 +72,28 @@ export default function PlanesScreen() {
           <Text style={styles.meta}>
             No se pudieron cargar los planes. Encuéntralos en quinielabox.com.
           </Text>
+        </View>
+      )}
+
+      {mustChoose && (
+        <View style={styles.card}>
+          <Text style={[styles.planName, { marginBottom: spacing.sm }]}>
+            ¿Qué quiniela quieres mejorar?
+          </Text>
+          {owned.map((t) => (
+            <View key={t.slug} style={{ marginBottom: spacing.sm }}>
+              <Button
+                title={t.name}
+                variant="secondary"
+                onPress={() =>
+                  openWebLoggedIn(
+                    `/saas/${t.slug}/panel`,
+                    fillSlug(config.upgrade.urlTemplate, t.slug),
+                  )
+                }
+              />
+            </View>
+          ))}
         </View>
       )}
 
@@ -92,9 +134,11 @@ export default function PlanesScreen() {
       ))}
 
       <Text style={styles.fine}>
-        {config.upgrade.enabled && slug
+        {config.upgrade.enabled && (slug || mustChoose)
           ? 'El pago se completa de forma segura en quinielabox.com. Los beneficios se activan al instante en la app.'
-          : 'Los planes se gestionan desde quinielabox.com con la cuenta del organizador.'}
+          : owned.length === 0
+            ? 'Crea tu quiniela para poder mejorarla de plan.'
+            : 'Los planes se gestionan desde quinielabox.com con la cuenta del organizador.'}
       </Text>
     </ScrollView>
   );
