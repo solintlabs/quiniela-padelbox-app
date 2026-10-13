@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { FALLBACK_CONFIG, fillSlug, saasApi, type SaasConfig } from '@/lib/saas-api';
 import { openWebLoggedIn } from '@/lib/web-bridge';
@@ -26,6 +26,9 @@ export default function PlanesScreen() {
   // enseñaba los precios pero ningún botón para pagar, que es justo donde se
   // perdía la venta.
   const [owned, setOwned] = useState<Array<{ slug: string; name: string; plan: string }>>([]);
+  // Administra alguna, aunque ya sea Pro. Sirve para no decirle "crea tu
+  // quiniela" a quien ya las tiene todas mejoradas.
+  const [ownsAny, setOwnsAny] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -35,14 +38,19 @@ export default function PlanesScreen() {
         .catch(() => setConfig(FALLBACK_CONFIG));
       saasApi
         .tenants()
-        .then((r) =>
+        .then((r) => {
+          const mine = r.tenants.filter((t) => t.role === 'OWNER');
+          setOwnsAny(mine.length > 0);
           setOwned(
-            r.tenants
-              .filter((t) => t.role === 'OWNER' && t.plan === 'FREE')
+            mine
+              .filter((t) => t.plan === 'FREE')
               .map((t) => ({ slug: t.slug, name: t.name, plan: t.plan })),
-          ),
-        )
-        .catch(() => setOwned([]));
+          );
+        })
+        .catch(() => {
+          setOwned([]);
+          setOwnsAny(false);
+        });
     }, []),
   );
 
@@ -72,6 +80,20 @@ export default function PlanesScreen() {
           <Text style={styles.meta}>
             No se pudieron cargar los planes. Encuéntralos en quinielabox.com.
           </Text>
+        </View>
+      )}
+
+      {/* Sin quiniela no hay nada que mejorar: el plan se aplica a UNA
+          quiniela concreta. En vez de dejar un mensaje sin salida, se ofrece
+          crearla — que es el paso que falta para poder comprar. */}
+      {owned.length === 0 && !ownsAny && !slugParam && config.upgrade.enabled && (
+        <View style={[styles.card, { borderColor: colors.accent }]}>
+          <Text style={[styles.planName, { color: colors.accent }]}>Empieza por tu quiniela</Text>
+          <Text style={[styles.meta, { marginVertical: spacing.sm }]}>
+            El plan se aplica a una quiniela concreta. Crea la tuya —es gratis y
+            lleva un minuto— y podrás pasarla a Pro cuando quieras.
+          </Text>
+          <Button title="Crear mi quiniela" onPress={() => router.push('/crear-quiniela')} />
         </View>
       )}
 
@@ -136,9 +158,9 @@ export default function PlanesScreen() {
       <Text style={styles.fine}>
         {config.upgrade.enabled && (slug || mustChoose)
           ? 'El pago se completa de forma segura en quinielabox.com. Los beneficios se activan al instante en la app.'
-          : owned.length === 0
-            ? 'Crea tu quiniela para poder mejorarla de plan.'
-            : 'Los planes se gestionan desde quinielabox.com con la cuenta del organizador.'}
+          : ownsAny
+            ? 'Tus quinielas ya tienen plan Pro.'
+            : 'Crea tu quiniela para poder mejorarla de plan.'}
       </Text>
     </ScrollView>
   );
