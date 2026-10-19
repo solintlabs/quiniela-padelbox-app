@@ -38,8 +38,6 @@ const STADIUM_BG =
  */
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +103,7 @@ export default function LoginScreen() {
       await requestLoginCode(cleanEmail);
       router.push({
         pathname: '/(auth)/verify',
-        params: { email: cleanEmail, name: name.trim(), phone: phone.trim() },
+        params: { email: cleanEmail },
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error inesperado');
@@ -133,33 +131,6 @@ export default function LoginScreen() {
 
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>{t('login.name')}</Text>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="Tu nombre o apodo"
-                placeholderTextColor={colors.muted}
-                autoComplete="name"
-                maxLength={60}
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>{t('login.phone')}</Text>
-              <TextInput
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="+1 786 555 0000"
-                placeholderTextColor={colors.muted}
-                keyboardType="phone-pad"
-                autoComplete="tel"
-                maxLength={20}
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
               <Text style={styles.label}>{t('login.email')}</Text>
               <TextInput
                 value={email}
@@ -176,10 +147,6 @@ export default function LoginScreen() {
 
             <Button title={t('login.sendCode')} onPress={onSubmit} loading={loading} disabled={!email.trim()} />
             {error && <Text style={styles.error}>{error}</Text>}
-
-            <Text style={styles.hint}>
-              Si ya tienes cuenta, nombre y teléfono solo se guardan la primera vez.
-            </Text>
           </View>
 
           {/* Login social DEBAJO del formulario. Apple exige su botón oficial;

@@ -36,10 +36,15 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     }
     console.warn('[api]', path, res.status, message);
     if (res.status === 401) {
-      await clearToken();
-      setTimeout(() => {
-        try { router.replace('/(auth)/(tabs)/login'); } catch {}
-      }, 0);
+      // Solo hay sesión que caducar si llevábamos token. Sin él (pre-login),
+      // expulsar al login era el bug: una pantalla pública que toque un
+      // endpoint con auth (Planes → /api/saas/tenants) echaba al usuario.
+      if (token) {
+        await clearToken();
+        setTimeout(() => {
+          try { router.replace('/(auth)/(tabs)/login'); } catch {}
+        }, 0);
+      }
       throw new UnauthenticatedError();
     }
     throw new Error(message);

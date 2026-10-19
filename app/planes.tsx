@@ -9,6 +9,7 @@ import {
 import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { FALLBACK_CONFIG, fillSlug, saasApi, type SaasConfig } from '@/lib/saas-api';
+import { getToken } from '@/lib/auth';
 import { openWebLoggedIn } from '@/lib/web-bridge';
 import { Button } from '@/components/Button';
 
@@ -29,6 +30,7 @@ export default function PlanesScreen() {
   // Administra alguna, aunque ya sea Pro. Sirve para no decirle "crea tu
   // quiniela" a quien ya las tiene todas mejoradas.
   const [ownsAny, setOwnsAny] = useState(false);
+  const [hasSession, setHasSession] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
@@ -36,20 +38,32 @@ export default function PlanesScreen() {
         .config()
         .then(setConfig)
         .catch(() => setConfig(FALLBACK_CONFIG));
-      saasApi
-        .tenants()
-        .then((r) => {
-          const mine = r.tenants.filter((t) => t.role === 'OWNER');
-          setOwnsAny(mine.length > 0);
-          setOwned(
-            mine
-              .filter((t) => t.plan === 'FREE')
-              .map((t) => ({ slug: t.slug, name: t.name, plan: t.plan })),
-          );
-        })
-        .catch(() => {
-          setOwned([]);
-          setOwnsAny(false);
+      // /api/saas/tenants requiere sesión: esta pantalla también vive en la
+      // pestaña pre-login, y pedirlo sin token acababa en 401.
+      getToken()
+        .catch(() => null)
+        .then((token) => {
+          setHasSession(!!token);
+          if (!token) {
+            setOwned([]);
+            setOwnsAny(false);
+            return;
+          }
+          saasApi
+            .tenants()
+            .then((r) => {
+              const mine = r.tenants.filter((t) => t.role === 'OWNER');
+              setOwnsAny(mine.length > 0);
+              setOwned(
+                mine
+                  .filter((t) => t.plan === 'FREE')
+                  .map((t) => ({ slug: t.slug, name: t.name, plan: t.plan })),
+              );
+            })
+            .catch(() => {
+              setOwned([]);
+              setOwnsAny(false);
+            });
         });
     }, []),
   );
@@ -85,15 +99,21 @@ export default function PlanesScreen() {
 
       {/* Sin quiniela no hay nada que mejorar: el plan se aplica a UNA
           quiniela concreta. En vez de dejar un mensaje sin salida, se ofrece
-          crearla — que es el paso que falta para poder comprar. */}
+          crearla — que es el paso que falta para poder comprar. Sin sesión,
+          el paso previo es entrar (crear quiniela requiere cuenta). */}
       {owned.length === 0 && !ownsAny && !slugParam && config.upgrade.enabled && (
         <View style={[styles.card, { borderColor: colors.accent }]}>
           <Text style={[styles.planName, { color: colors.accent }]}>Empieza por tu quiniela</Text>
           <Text style={[styles.meta, { marginVertical: spacing.sm }]}>
-            El plan se aplica a una quiniela concreta. Crea la tuya —es gratis y
-            lleva un minuto— y podrás pasarla a Pro cuando quieras.
+            {hasSession
+              ? 'El plan se aplica a una quiniela concreta. Crea la tuya —es gratis y lleva un minuto— y podrás pasarla a Pro cuando quieras.'
+              : 'El plan se aplica a una quiniela concreta. Entra con tu email, crea la tuya gratis y podrás pasarla a Pro cuando quieras.'}
           </Text>
-          <Button title="Crear mi quiniela" onPress={() => router.push('/crear-quiniela')} />
+          {hasSession ? (
+            <Button title="Crear mi quiniela" onPress={() => router.push('/crear-quiniela')} />
+          ) : (
+            <Button title="Entrar y crear la mía" onPress={() => router.push('/(auth)/(tabs)/login')} />
+          )}
         </View>
       )}
 
