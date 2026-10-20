@@ -18,7 +18,8 @@ import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 const CODE_LEN = 6;
 
 export default function VerifyScreen() {
-  const { email = '' } = useLocalSearchParams<{ email?: string }>();
+  const { email = '', next } = useLocalSearchParams<{ email?: string; next?: string }>();
+  const afterLogin = next === 'planes' ? '/planes' : '/quinielas';
   const [digits, setDigits] = useState<string[]>(Array(CODE_LEN).fill(''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,8 +59,8 @@ export default function VerifyScreen() {
     setError(null);
     try {
       await verifyLoginCode(email, finalCode);
-      // Al hub multi-quiniela, igual que los logins de Apple/Google.
-      router.replace('/quinielas');
+      // Al hub multi-quiniela, o de vuelta a donde pidió entrar (Planes).
+      router.replace(afterLogin);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Código inválido');
       setDigits(Array(CODE_LEN).fill(''));

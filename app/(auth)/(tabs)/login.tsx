@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -37,6 +37,10 @@ const STADIUM_BG =
  * Flujo: email → código de 6 dígitos (sin contraseñas).
  */
 export default function LoginScreen() {
+  // `next` deja volver a la pantalla desde la que se pidió entrar (hoy,
+  // Planes): entrar no debe costarte el sitio donde estabas.
+  const { next } = useLocalSearchParams<{ next?: string }>();
+  const afterLogin = next === 'planes' ? '/planes' : '/quinielas';
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
@@ -61,7 +65,7 @@ export default function LoginScreen() {
     setSocialLoading(true);
     setError(null);
     loginWithGoogle(idToken)
-      .then(() => router.replace('/quinielas'))
+      .then(() => router.replace(afterLogin))
       .catch((e) => setError(e instanceof Error ? e.message : 'No se pudo entrar con Google'))
       .finally(() => setSocialLoading(false));
   }, [googleResponse]);
@@ -82,7 +86,7 @@ export default function LoginScreen() {
         .join(' ');
       setSocialLoading(true);
       await loginWithApple(credential.identityToken, fullName || undefined);
-      router.replace('/quinielas');
+      router.replace(afterLogin);
     } catch (e) {
       // ERR_REQUEST_CANCELED = el usuario cerró el diálogo: no es un error.
       const code = (e as { code?: string })?.code;
@@ -103,7 +107,7 @@ export default function LoginScreen() {
       await requestLoginCode(cleanEmail);
       router.push({
         pathname: '/(auth)/verify',
-        params: { email: cleanEmail },
+        params: { email: cleanEmail, ...(next ? { next } : {}) },
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error inesperado');

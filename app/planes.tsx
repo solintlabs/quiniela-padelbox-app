@@ -68,10 +68,35 @@ export default function PlanesScreen() {
     }, []),
   );
 
-  // Si no vino por parámetro y solo administra una quiniela gratuita, se usa
-  // esa: lo normal es que quien entra a Planes quiera mejorar la suya.
-  const slug = slugParam ?? (owned.length === 1 ? owned[0].slug : undefined);
-  const mustChoose = !slugParam && owned.length > 1;
+  // Cuál quiniela se mejora: la de la ruta, la que eligió aquí, o la única
+  // gratuita que administra (lo normal al entrar a Planes).
+  const [chosen, setChosen] = useState<string | null>(null);
+  const [pickHint, setPickHint] = useState(false);
+  const slug = slugParam ?? chosen ?? (owned.length === 1 ? owned[0].slug : undefined);
+  const mustChoose = !slugParam && !chosen && owned.length > 1;
+
+  /**
+   * Un solo botón por plan, siempre visible: lleva al paso que falte para
+   * poder pagar. Antes la pantalla escondía el botón cuando no había slug
+   * (sin sesión o entrando desde el menú general) y el escaparate de precios
+   * se quedaba sin nada que pulsar — justo donde se perdía la venta.
+   */
+  function choosePlan() {
+    if (!hasSession) {
+      // Vuelve a Planes después de entrar, en vez de dejarte en el hub.
+      router.push({ pathname: '/(auth)/(tabs)/login', params: { next: 'planes' } });
+      return;
+    }
+    if (!ownsAny) {
+      router.push('/crear-quiniela');
+      return;
+    }
+    if (!slug) {
+      setPickHint(true);
+      return;
+    }
+    openWebLoggedIn(`/saas/${slug}/panel`, fillSlug(config!.upgrade.urlTemplate, slug));
+  }
 
   if (!config) {
     return (
@@ -97,46 +122,55 @@ export default function PlanesScreen() {
         </View>
       )}
 
-      {/* Sin quiniela no hay nada que mejorar: el plan se aplica a UNA
-          quiniela concreta. En vez de dejar un mensaje sin salida, se ofrece
-          crearla — que es el paso que falta para poder comprar. Sin sesión,
-          el paso previo es entrar (crear quiniela requiere cuenta). */}
-      {owned.length === 0 && !ownsAny && !slugParam && config.upgrade.enabled && (
+      {/* El plan se aplica a UNA quiniela concreta, así que el camino hasta el
+          pago puede tener un paso previo (entrar, o crear la quiniela). Se
+          anuncia aquí, pero sin esconder los botones de los planes: desde
+          cualquiera de ellos se llega al mismo sitio. */}
+      {!slugParam && !ownsAny && config.upgrade.enabled && (
         <View style={[styles.card, { borderColor: colors.accent }]}>
-          <Text style={[styles.planName, { color: colors.accent }]}>Empieza por tu quiniela</Text>
+          <Text style={[styles.planName, { color: colors.accent }]}>
+            {hasSession ? 'Empieza por tu quiniela' : 'Entra para elegir tu plan'}
+          </Text>
           <Text style={[styles.meta, { marginVertical: spacing.sm }]}>
             {hasSession
-              ? 'El plan se aplica a una quiniela concreta. Crea la tuya —es gratis y lleva un minuto— y podrás pasarla a Pro cuando quieras.'
-              : 'El plan se aplica a una quiniela concreta. Entra con tu email, crea la tuya gratis y podrás pasarla a Pro cuando quieras.'}
+              ? 'El plan se aplica a una quiniela concreta. Crea la tuya —es gratis y lleva un minuto— y pásala a Pro cuando quieras.'
+              : 'El plan se aplica a una quiniela concreta. Entra con tu email y volverás aquí para elegirlo.'}
           </Text>
-          {hasSession ? (
-            <Button title="Crear mi quiniela" onPress={() => router.push('/crear-quiniela')} />
-          ) : (
-            <Button title="Entrar y crear la mía" onPress={() => router.push('/(auth)/(tabs)/login')} />
-          )}
+          <Button
+            title={hasSession ? 'Crear mi quiniela' : 'Entrar'}
+            onPress={choosePlan}
+          />
         </View>
       )}
 
       {mustChoose && (
-        <View style={styles.card}>
-          <Text style={[styles.planName, { marginBottom: spacing.sm }]}>
+        <View style={[styles.card, pickHint && { borderColor: colors.accent, borderWidth: 2 }]}>
+          <Text style={[styles.planName, { marginBottom: spacing.xs }]}>
             ¿Qué quiniela quieres mejorar?
+          </Text>
+          <Text style={[styles.meta, { marginBottom: spacing.sm }]}>
+            Elige una y luego pulsa el plan que quieras.
           </Text>
           {owned.map((t) => (
             <View key={t.slug} style={{ marginBottom: spacing.sm }}>
               <Button
                 title={t.name}
                 variant="secondary"
-                onPress={() =>
-                  openWebLoggedIn(
-                    `/saas/${t.slug}/panel`,
-                    fillSlug(config.upgrade.urlTemplate, t.slug),
-                  )
-                }
+                onPress={() => {
+                  setChosen(t.slug);
+                  setPickHint(false);
+                }}
               />
             </View>
           ))}
         </View>
+      )}
+
+      {/* Cuál se va a mejorar, para que el pago no sea una sorpresa. */}
+      {!!slug && owned.length > 1 && (
+        <Text style={[styles.fine, { marginTop: 0, marginBottom: spacing.md }]}>
+          Mejorarás: {owned.find((t) => t.slug === slug)?.name ?? slug}
+        </Text>
       )}
 
       {(config.displayPlans ?? []).map((p) => (
@@ -158,17 +192,15 @@ export default function PlanesScreen() {
           {p.features.map((f) => (
             <Feature key={f} text={f} />
           ))}
-          {p.upgradable && slug && config.upgrade.enabled && (
+          {/* El botón SIEMPRE está, con o sin quiniela en contexto: lleva al
+              paso que falte (entrar / crear / pagar). Una pantalla de precios
+              sin nada que pulsar no vende. */}
+          {p.upgradable && config.upgrade.enabled && (
             <View style={{ marginTop: spacing.md }}>
               <Button
                 title={`Elegir ${p.name}`}
                 variant={p.recommended ? 'primary' : 'secondary'}
-                onPress={() =>
-                  openWebLoggedIn(
-                    `/saas/${slug}/panel`,
-                    fillSlug(config.upgrade.urlTemplate, slug),
-                  )
-                }
+                onPress={choosePlan}
               />
             </View>
           )}
@@ -176,11 +208,15 @@ export default function PlanesScreen() {
       ))}
 
       <Text style={styles.fine}>
-        {config.upgrade.enabled && (slug || mustChoose)
-          ? 'El pago se completa de forma segura en quinielabox.com. Los beneficios se activan al instante en la app.'
-          : ownsAny
-            ? 'Tus quinielas ya tienen plan Pro.'
-            : 'Crea tu quiniela para poder mejorarla de plan.'}
+        {!config.upgrade.enabled
+          ? 'Los planes se gestionan desde quinielabox.com con la cuenta del organizador.'
+          : slug
+            ? 'El pago se completa de forma segura en quinielabox.com. Los beneficios se activan al instante en la app.'
+            : hasSession
+              ? ownsAny
+                ? 'Elige arriba la quiniela que quieres mejorar.'
+                : 'Crea tu quiniela —gratis— y podrás elegir plan.'
+              : 'Entra con tu email para elegir tu plan. El pago se completa de forma segura en quinielabox.com.'}
       </Text>
     </ScrollView>
   );
