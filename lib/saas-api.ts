@@ -41,6 +41,8 @@ export interface SaasDisplayPlan {
   features: string[];
   recommended: boolean;
   upgradable: boolean;
+  /** Producto de App Store / Google Play (desde el backend 2026-11-03). */
+  iapProductId?: string | null;
 }
 
 export interface SaasConfig {
@@ -55,6 +57,11 @@ export interface SaasConfig {
   };
   /** Página pública con la cuota y cómo pagar el bote ({slug} se sustituye aquí). */
   inscriptionUrlTemplate: string;
+  /** Compra integrada (desde el backend 2026-11-03). `enabled:false` = volver al link web. */
+  iap?: {
+    enabled: boolean;
+    products: { season: string; monthly: string };
+  };
 }
 
 /** Fallbacks por si /api/saas/config no responde: la app nunca se queda sin URLs. */
@@ -302,6 +309,12 @@ export const saasApi = {
       method: 'PATCH',
       body: JSON.stringify(patch),
     }),
+  /** Aplica a la quiniela una compra hecha en la tienda (el servidor la verifica en RevenueCat). */
+  claimIap: (slug: string, productId: string, transactionId?: string) =>
+    request<{ ok: true; alreadyApplied?: boolean; plan: SaasPlanId; proUntil: string | null }>(
+      `/api/saas/${slug}/billing/iap/claim`,
+      { method: 'POST', body: JSON.stringify({ productId, transactionId }) },
+    ),
   /** URL de un solo uso que abre el navegador YA logueado (puente app→web). */
   bridge: (next: string) =>
     request<{ url: string }>('/api/auth/bridge', {

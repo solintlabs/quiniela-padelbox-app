@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,29 +11,56 @@ import {
 } from 'react-native';
 import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
-import { FALLBACK_CONFIG, fillSlug, saasApi, type SaasConfig } from '@/lib/saas-api';
+import {
+  FALLBACK_CONFIG,
+  FALLBACK_SITE,
+  fillSlug,
+  saasApi,
+  type SaasConfig,
+  type SaasDisplayPlan,
+} from '@/lib/saas-api';
 import { getToken } from '@/lib/auth';
 import { openWebLoggedIn } from '@/lib/web-bridge';
+import {
+  ClaimFailed,
+  PurchaseCancelled,
+  buyForTenant,
+  claimPurchase,
+  iapAvailable,
+  loadStorePrices,
+  restorablePurchases,
+  type StorePrice,
+} from '@/lib/iap';
 import { Button } from '@/components/Button';
 
 /**
  * Planes de QuinielaBOX. Los datos vienen de /api/saas/config (la misma
- * verdad que la landing web). El botón "Subir a Pro" abre el checkout web en
- * el navegador y obedece el kill switch remoto (upgrade.enabled): si un
- * revisor lo objeta, la pantalla queda solo informativa sin build nuevo.
+ * verdad que la landing web).
+ *
+ * El pago se hace DENTRO de la app con la hoja nativa de App Store / Google
+ * Play (RevenueCat): Apple lo exige para bienes digitales. El plan se aplica
+ * a UNA quiniela concreta, así que el camino hasta el pago puede tener un
+ * paso previo (entrar, o crear la quiniela), pero los botones de los planes
+ * están SIEMPRE visibles: una pantalla de precios sin nada que pulsar no vende.
+ *
+ * Si la compra integrada no está disponible (kill switch remoto `iap.enabled`,
+ * sin clave para la plataforma, o web) se vuelve al checkout web de siempre.
  */
 export default function PlanesScreen() {
   const { slug: slugParam } = useLocalSearchParams<{ slug?: string }>();
   const [config, setConfig] = useState<SaasConfig | null>(null);
-  // Quinielas que ADMINISTRA el usuario. Hacen falta cuando se entra a Planes
-  // desde el menú general (sin quiniela en contexto): sin esto la pantalla
-  // enseñaba los precios pero ningún botón para pagar, que es justo donde se
-  // perdía la venta.
+  // Quinielas que ADMINISTRA el usuario y aún son FREE: candidatas a mejorar.
   const [owned, setOwned] = useState<Array<{ slug: string; name: string; plan: string }>>([]);
   // Administra alguna, aunque ya sea Pro. Sirve para no decirle "crea tu
   // quiniela" a quien ya las tiene todas mejoradas.
   const [ownsAny, setOwnsAny] = useState(false);
   const [hasSession, setHasSession] = useState(true);
+  // Precios reales de la tienda, en la moneda del usuario. Si no llegan se
+  // enseñan los del backend (en USD).
+  const [prices, setPrices] = useState<Record<string, StorePrice>>({});
+  // Producto que se está comprando ahora mismo (bloquea el resto de botones).
+  const [busy, setBusy] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -38,6 +68,7 @@ export default function PlanesScreen() {
         .config()
         .then(setConfig)
         .catch(() => setConfig(FALLBACK_CONFIG));
+      if (iapAvailable()) loadStorePrices().then(setPrices);
       // /api/saas/tenants requiere sesión: esta pantalla también vive en la
       // pestaña pre-login, y pedirlo sin token acababa en 401.
       getToken()
@@ -75,27 +106,105 @@ export default function PlanesScreen() {
   const slug = slugParam ?? chosen ?? (owned.length === 1 ? owned[0].slug : undefined);
   const mustChoose = !slugParam && !chosen && owned.length > 1;
 
+  const useIap =
+    Platform.OS !== 'web' && iapAvailable() && (config?.iap?.enabled ?? false);
+
+  function priceOf(p: SaasDisplayPlan): string {
+    return (p.iapProductId && prices[p.iapProductId]?.priceString) || p.priceBig;
+  }
+
   /**
    * Un solo botón por plan, siempre visible: lleva al paso que falte para
-   * poder pagar. Antes la pantalla escondía el botón cuando no había slug
-   * (sin sesión o entrando desde el menú general) y el escaparate de precios
-   * se quedaba sin nada que pulsar — justo donde se perdía la venta.
+   * poder pagar (entrar → crear la quiniela → hoja de pago).
    */
-  function choosePlan() {
+  function choosePlan(p: SaasDisplayPlan) {
     if (!hasSession) {
       // Vuelve a Planes después de entrar, en vez de dejarte en el hub.
       router.push({ pathname: '/(auth)/(tabs)/login', params: { next: 'planes' } });
       return;
     }
     if (!ownsAny) {
-      router.push('/crear-quiniela');
+      // Crear la quiniela y pagar el plan elegido en el mismo gesto.
+      router.push({
+        pathname: '/crear-quiniela',
+        params: useIap && p.iapProductId ? { plan: p.iapProductId } : {},
+      });
       return;
     }
     if (!slug) {
       setPickHint(true);
       return;
     }
+    if (useIap && p.iapProductId) {
+      void buy(slug, p.iapProductId);
+      return;
+    }
     openWebLoggedIn(`/saas/${slug}/panel`, fillSlug(config!.upgrade.urlTemplate, slug));
+  }
+
+  async function buy(forSlug: string, productId: string) {
+    if (busy) return;
+    setBusy(productId);
+    try {
+      await buyForTenant(forSlug, productId, prices);
+      const name = owned.find((t) => t.slug === forSlug)?.name ?? forSlug;
+      Alert.alert('¡Ya eres Pro!', `${name} tiene todas las ventajas activadas.`, [
+        {
+          text: 'Abrir la quiniela',
+          onPress: () => router.replace({ pathname: '/q/[slug]', params: { slug: forSlug } }),
+        },
+      ]);
+    } catch (e) {
+      if (e instanceof PurchaseCancelled) return;
+      if (e instanceof ClaimFailed) {
+        // El cobro ya se hizo: jamás pedir que vuelva a pagar.
+        Alert.alert(
+          'Pago recibido, falta activarlo',
+          `${e.message}\n\nNo se te cobrará de nuevo: pulsa "Restaurar compras" y lo activamos.`,
+        );
+        return;
+      }
+      Alert.alert('No se pudo completar la compra', e instanceof Error ? e.message : 'Inténtalo de nuevo.');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /**
+   * Compras pagadas que no llegaron a aplicarse (la app se cerró a mitad,
+   * reinstalación, otro dispositivo). Se intentan aplicar a la quiniela en
+   * contexto; lo que ya estaba aplicado el servidor lo ignora.
+   */
+  async function restore() {
+    if (!config?.iap || restoring) return;
+    if (!slug) {
+      setPickHint(true);
+      Alert.alert('Elige la quiniela', 'Primero indica a qué quiniela aplicar la compra.');
+      return;
+    }
+    setRestoring(true);
+    try {
+      const pending = await restorablePurchases(config.iap.products);
+      let applied = 0;
+      for (const outcome of pending) {
+        try {
+          const r = await claimPurchase(slug, outcome);
+          if (!r.alreadyApplied) applied++;
+        } catch {
+          // Ya usada en otra quiniela, caducada… se prueba con la siguiente.
+        }
+      }
+      Alert.alert(
+        applied ? '¡Compra restaurada!' : 'Nada que restaurar',
+        applied
+          ? 'El plan Pro ya está activo en tu quiniela.'
+          : 'No encontramos compras pendientes de aplicar en esta cuenta.',
+      );
+    } catch (e) {
+      Alert.alert('No se pudo restaurar', e instanceof Error ? e.message : 'Inténtalo de nuevo.');
+    } finally {
+      setRestoring(false);
+    }
   }
 
   if (!config) {
@@ -106,6 +215,8 @@ export default function PlanesScreen() {
       </View>
     );
   }
+
+  const canBuy = config.upgrade.enabled || useIap;
 
   return (
     <ScrollView
@@ -122,24 +233,18 @@ export default function PlanesScreen() {
         </View>
       )}
 
-      {/* El plan se aplica a UNA quiniela concreta, así que el camino hasta el
-          pago puede tener un paso previo (entrar, o crear la quiniela). Se
-          anuncia aquí, pero sin esconder los botones de los planes: desde
-          cualquiera de ellos se llega al mismo sitio. */}
-      {!slugParam && !ownsAny && config.upgrade.enabled && (
+      {/* Paso previo al pago, anunciado sin esconder los botones de los planes. */}
+      {!slugParam && !ownsAny && canBuy && (
         <View style={[styles.card, { borderColor: colors.accent }]}>
           <Text style={[styles.planName, { color: colors.accent }]}>
             {hasSession ? 'Empieza por tu quiniela' : 'Entra para elegir tu plan'}
           </Text>
           <Text style={[styles.meta, { marginVertical: spacing.sm }]}>
             {hasSession
-              ? 'El plan se aplica a una quiniela concreta. Crea la tuya —es gratis y lleva un minuto— y pásala a Pro cuando quieras.'
+              ? 'El plan se aplica a una quiniela concreta. Elige un plan abajo: creas tu quiniela y pagas en el mismo paso.'
               : 'El plan se aplica a una quiniela concreta. Entra con tu email y volverás aquí para elegirlo.'}
           </Text>
-          <Button
-            title={hasSession ? 'Crear mi quiniela' : 'Entrar'}
-            onPress={choosePlan}
-          />
+          {!hasSession && <Button title="Entrar" onPress={() => choosePlan(config.displayPlans![0])} />}
         </View>
       )}
 
@@ -184,7 +289,7 @@ export default function PlanesScreen() {
               {p.name}
             </Text>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.planPrice}>{p.priceBig}</Text>
+              <Text style={styles.planPrice}>{priceOf(p)}</Text>
               <Text style={styles.priceSub}>{p.priceSub}</Text>
             </View>
           </View>
@@ -192,32 +297,67 @@ export default function PlanesScreen() {
           {p.features.map((f) => (
             <Feature key={f} text={f} />
           ))}
-          {/* El botón SIEMPRE está, con o sin quiniela en contexto: lleva al
-              paso que falte (entrar / crear / pagar). Una pantalla de precios
-              sin nada que pulsar no vende. */}
-          {p.upgradable && config.upgrade.enabled && (
+          {p.upgradable && canBuy && (
             <View style={{ marginTop: spacing.md }}>
               <Button
-                title={`Elegir ${p.name}`}
+                title={
+                  useIap && slug && hasSession && ownsAny
+                    ? `Comprar ${p.name} · ${priceOf(p)}`
+                    : `Elegir ${p.name}`
+                }
                 variant={p.recommended ? 'primary' : 'secondary'}
-                onPress={choosePlan}
+                loading={busy === p.iapProductId}
+                disabled={!!busy && busy !== p.iapProductId}
+                onPress={() => choosePlan(p)}
               />
             </View>
           )}
         </View>
       ))}
 
+      {useIap && hasSession && ownsAny && (
+        <Button
+          title={restoring ? 'Restaurando…' : 'Restaurar compras'}
+          variant="ghost"
+          loading={restoring}
+          onPress={restore}
+        />
+      )}
+
       <Text style={styles.fine}>
-        {!config.upgrade.enabled
+        {!canBuy
           ? 'Los planes se gestionan desde quinielabox.com con la cuenta del organizador.'
-          : slug
-            ? 'El pago se completa de forma segura en quinielabox.com. Los beneficios se activan al instante en la app.'
-            : hasSession
-              ? ownsAny
-                ? 'Elige arriba la quiniela que quieres mejorar.'
-                : 'Crea tu quiniela —gratis— y podrás elegir plan.'
-              : 'Entra con tu email para elegir tu plan. El pago se completa de forma segura en quinielabox.com.'}
+          : useIap
+            ? hasSession
+              ? 'El pago se hace con tu cuenta de App Store o Google Play. Las ventajas se activan al instante en la quiniela elegida.'
+              : 'Entra con tu email para elegir tu plan. El pago se hace con tu cuenta de App Store o Google Play.'
+            : slug
+              ? 'El pago se completa de forma segura en quinielabox.com. Los beneficios se activan al instante en la app.'
+              : hasSession
+                ? ownsAny
+                  ? 'Elige arriba la quiniela que quieres mejorar.'
+                  : 'Crea tu quiniela —gratis— y podrás elegir plan.'
+                : 'Entra con tu email para elegir tu plan. El pago se completa de forma segura en quinielabox.com.'}
       </Text>
+
+      {/* Apple exige, para suscripciones auto-renovables, decir que se renueva
+          sola, cómo se cancela y enlazar términos y privacidad. */}
+      {useIap && (
+        <Text style={styles.legal}>
+          Pro Mensual se renueva automáticamente cada mes al precio indicado hasta que lo canceles,
+          al menos 24 h antes del fin del periodo, en los ajustes de suscripciones de tu cuenta de{' '}
+          {Platform.OS === 'ios' ? 'App Store' : 'Google Play'}. Pro Temporada es un pago único.
+          Al comprar aceptas los{' '}
+          <Text style={styles.link} onPress={() => Linking.openURL(`${FALLBACK_SITE}/terms`)}>
+            Términos
+          </Text>{' '}
+          y la{' '}
+          <Text style={styles.link} onPress={() => Linking.openURL(`${FALLBACK_SITE}/privacy`)}>
+            Política de privacidad
+          </Text>
+          .
+        </Text>
+      )}
     </ScrollView>
   );
 }
@@ -273,4 +413,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     lineHeight: 18,
   },
+  legal: {
+    fontFamily: fontFamily.body,
+    fontSize: 10,
+    color: colors.muted,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+    lineHeight: 15,
+    opacity: 0.8,
+  },
+  link: { color: colors.ink, textDecorationLine: 'underline' },
 });

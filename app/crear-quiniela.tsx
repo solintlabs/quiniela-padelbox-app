@@ -11,22 +11,27 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { colors, fontFamily, fontSize, radius, spacing } from '@/lib/theme';
 import { FALLBACK_SITE, saasApi } from '@/lib/saas-api';
 import { pickLogoDataUrl } from '@/lib/logo-picker';
+import { ClaimFailed, PurchaseCancelled, buyForTenant } from '@/lib/iap';
 import { Button } from '@/components/Button';
 
 /**
- * Alta de una quiniela desde el teléfono. Crear es GRATIS (plan FREE), así que
- * Apple no exige compra dentro de la app. La gestión avanzada (competición,
- * partidos, jugadores) vive en el panel web; al terminar se ofrece compartir
- * la invitación y abrir la quiniela recién creada.
+ * Alta de una quiniela desde el teléfono. Crear es GRATIS (plan FREE). La
+ * gestión avanzada (competición, partidos, jugadores) vive en el panel web; al
+ * terminar se ofrece compartir la invitación y abrir la quiniela recién creada.
+ *
+ * Con `?plan=<productId>` (viene de Planes) se encadena la compra integrada
+ * justo después de crear: la quiniela nace y en el mismo gesto se paga el Pro.
+ * Si el pago se cancela o falla, la quiniela YA existe (gratis) y se abre igual.
  */
 const ACCENT_CHOICES = ['#B6FF3C', '#3CD3FF', '#FF7A3C', '#FF3C8E', '#C13CFF', '#FFD23C'];
 
 export default function CrearQuiniela() {
+  const { plan } = useLocalSearchParams<{ plan?: string }>();
   const [name, setName] = useState('');
   const [accent, setAccent] = useState(ACCENT_CHOICES[0]);
   const [logo, setLogo] = useState<string | null>(null);
@@ -57,8 +62,34 @@ export default function CrearQuiniela() {
         description.trim() || undefined,
       );
       const url = `${FALLBACK_SITE}/saas/${res.tenant.slug}`;
+
+      // Venía de Planes con un plan elegido: hoja de pago nativa ahora mismo.
+      let upgraded = false;
+      if (plan) {
+        try {
+          await buyForTenant(res.tenant.slug, plan);
+          upgraded = true;
+        } catch (e) {
+          if (e instanceof ClaimFailed) {
+            Alert.alert(
+              'Pago recibido, falta activarlo',
+              `${e.message}
+
+No se te cobrará de nuevo: en Planes, pulsa "Restaurar compras".`,
+            );
+          } else if (!(e instanceof PurchaseCancelled)) {
+            Alert.alert(
+              'La quiniela se creó, pero el pago no',
+              `${e instanceof Error ? e.message : 'Inténtalo de nuevo.'}
+
+Puedes pasarla a Pro cuando quieras desde Planes.`,
+            );
+          }
+        }
+      }
+
       Alert.alert(
-        '¡Quiniela creada!',
+        upgraded ? '¡Quiniela creada y ya en Pro!' : '¡Quiniela creada!',
         'Invita a tu gente y añade la competición desde el panel.',
         [
           {
@@ -90,7 +121,9 @@ export default function CrearQuiniela() {
       <Stack.Screen options={{ title: 'Crear quiniela' }} />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.lead}>
-          Tu quiniela, tu marca, tus reglas. Gratis para empezar — hasta 15 jugadores.
+          {plan
+            ? 'Primero tu quiniela: nombre y color. Al crearla pagas el plan Pro que elegiste y nace con todas las ventajas.'
+            : 'Tu quiniela, tu marca, tus reglas. Gratis para empezar — hasta 15 jugadores.'}
         </Text>
 
         <Text style={styles.label}>Nombre de la quiniela</Text>
@@ -160,7 +193,11 @@ export default function CrearQuiniela() {
         />
 
         <View style={{ height: spacing.xl }} />
-        <Button title={saving ? 'Creando…' : 'Crear mi quiniela'} onPress={create} loading={saving} />
+        <Button
+          title={saving ? 'Creando…' : plan ? 'Crear y pasar a Pro' : 'Crear mi quiniela'}
+          onPress={create}
+          loading={saving}
+        />
         <Text style={styles.fine}>
           Podrás añadir la competición, los partidos y gestionar jugadores desde el panel web.
         </Text>

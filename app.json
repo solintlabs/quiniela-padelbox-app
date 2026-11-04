@@ -2,7 +2,7 @@
   "expo": {
     "name": "QuinielaBOX",
     "slug": "quiniela-padelbox-app",
-    "version": "1.3.9",
+    "version": "1.4.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": [
@@ -80,6 +80,10 @@
     },
     "extra": {
       "apiUrl": "https://quiniela.solint.cloud",
+      "revenueCat": {
+        "ios": "",
+        "android": ""
+      },
       "googleIosClientId": "4316983371-8hc1ck2hl08k3hgpoesk20663ej6oal3.apps.googleusercontent.com",
       "router": {},
       "eas": {
